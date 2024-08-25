@@ -12,7 +12,7 @@ import java.util.List;
 public class payLoad {
     private String socketId;
     private String type;
-    private List<Integer> position;
-    private Double rotation;
+    private List<Float> position;
+    private Float rotation;
 
 }

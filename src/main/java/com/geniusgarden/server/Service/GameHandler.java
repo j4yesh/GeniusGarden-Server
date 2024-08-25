@@ -8,16 +8,13 @@ import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class GameHandler extends TextWebSocketHandler {
 
     private static final Map<String, WebSocketSession> sessions = new HashMap<>();
 
-    private List<Integer> spawnPosition = Arrays.asList(-7, 2, 0);
+    private List<Float> spawnPosition = Arrays.asList(-7.0f, 2.0f, 0.0f);
 
 
     @Override
@@ -28,16 +25,28 @@ public class GameHandler extends TextWebSocketHandler {
         pl.setSocketId(session.getId());
         pl.setType("new player");
         pl.setPosition(spawnPosition);
-        this.spawnPosition.set(0,this.spawnPosition.get(0) + 2);
-        pl.setRotation(0.0);
+        this.spawnPosition.set(0,this.spawnPosition.get(0) + 2f);
+        pl.setRotation(0f);
 
         System.out.println("new player joined "+session.getId());
-        String joinMessage = JsonUtil.toJson(pl);
-        broadcastMessage(session, joinMessage);
+
+        broadcastMessage(session, JsonUtil.toJson(pl));
 
         pl.setType("self id");
-        joinMessage=JsonUtil.toJson(pl);
-        sendMessageToClient(session.getId(),joinMessage);
+
+        sendMessageToClient(session.getId(),JsonUtil.toJson(pl));
+        for(Map.Entry<String,WebSocketSession> it: sessions.entrySet()){
+            String key = it.getKey();
+            WebSocketSession value = it.getValue();
+            if(key != session.getId()){
+                payLoad p = new payLoad();
+                p.setSocketId(key);
+                p.setType("new player");
+                p.setPosition(Arrays.asList(0f,0f,0f));
+                p.setRotation(0f);
+                sendMessageToClient(session.getId(), JsonUtil.toJson(p));
+            }
+        }
     }
 
     @Override
@@ -56,8 +65,8 @@ public class GameHandler extends TextWebSocketHandler {
         this.spawnPosition.set(0,this.spawnPosition.get(0) - 2);
 
         System.out.println("player left: "+session.getId());
-        String joinMessage = JsonUtil.toJson(pl);
-        broadcastMessage(session, joinMessage);
+
+        broadcastMessage(session, JsonUtil.toJson(pl));
     }
 
     /**
