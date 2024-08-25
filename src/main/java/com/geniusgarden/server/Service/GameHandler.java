@@ -1,7 +1,10 @@
 package com.geniusgarden.server.Service;
 
 import com.geniusgarden.server.Model.payLoad;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketMessage;
@@ -10,12 +13,15 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.*;
 
+@Component
 public class GameHandler extends TextWebSocketHandler {
 
     private static final Map<String, WebSocketSession> sessions = new HashMap<>();
 
-    private List<Float> spawnPosition = Arrays.asList(-7.0f, 2.0f, 0.0f);
+    private final List<Float> spawnPosition = Arrays.asList(-7.0f, 2.0f, 0.0f);
 
+    @Autowired
+    questionMaker questionMaker;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -53,7 +59,7 @@ public class GameHandler extends TextWebSocketHandler {
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
         String payload = (String) message.getPayload();
 //        System.out.println("Received payload: " + payload);
-        broadcastMessage(session, payload);  // Pass the current session to exclude it from broadcasting
+        broadcastMessage(session, payload);
     }
 
     @Override
@@ -69,12 +75,6 @@ public class GameHandler extends TextWebSocketHandler {
         broadcastMessage(session, JsonUtil.toJson(pl));
     }
 
-    /**
-     * Broadcast a message to all connected WebSocket clients except the sender.
-     *
-     * @param senderSession The session that sent the message.
-     * @param message       The message to broadcast.
-     */
     private void broadcastMessage(WebSocketSession senderSession, String message) {
         TextMessage textMessage = new TextMessage(message);
         for (WebSocketSession session : sessions.values()) {
@@ -84,13 +84,25 @@ public class GameHandler extends TextWebSocketHandler {
                 } catch (Exception e) {
                     System.err.println("Error sending message to session ID: " + session.getId());
                     e.printStackTrace();
-                    // Handle exception, possibly removing the session from the map
+
                 }
             }
         }
     }
+    private void broadcastMessage(String message) {
+        TextMessage textMessage = new TextMessage(message);
+        for (WebSocketSession session : sessions.values()) {
+                try {
+                    session.sendMessage(textMessage);
+                } catch (Exception e) {
+                    System.err.println("Error sending message to session ID: " + session.getId());
+                    e.printStackTrace();
 
-    public void sendMessageToClient(String sessionId, String message) {
+                }
+        }
+    }
+
+    private void sendMessageToClient(String sessionId, String message) {
         WebSocketSession session = sessions.get(sessionId);
         if (session != null && session.isOpen()) {
             try {
@@ -100,10 +112,52 @@ public class GameHandler extends TextWebSocketHandler {
             } catch (Exception e) {
                 System.err.println("Error sending message to session ID: " + sessionId);
                 e.printStackTrace();
-                // Handle the exception, possibly remove the session from the map
+
             }
         } else {
             System.err.println("Session ID: " + sessionId + " not found or not open.");
+        }
+    }
+
+    @Scheduled(fixedRate = 5000)
+    private void spawnRat(){
+        List<String>question=new ArrayList<String>();
+        List<String>answer=new ArrayList<String>();
+        int n=sessions.size();
+        questionMaker.makeQuestion(question,answer,n);
+        int idx=0;
+        Set<String> ansValid = new HashSet<String>();
+        for(Map.Entry<String,WebSocketSession> it: sessions.entrySet()){
+            payLoad p = new payLoad();
+            p.setSocketId(it.getValue().getId());
+            p.setType("spawn rat");
+
+            Float randX=questionMaker.random.nextFloat(18f)-9f; //(-9,9)
+            Float randY=questionMaker.random.nextFloat(18f)-9f;
+
+            p.setPosition(Arrays.asList(randX,randY,0f));
+            p.setQuestion(question.get(idx));
+            p.setAnswer(answer.get(idx));
+            ansValid.add(answer.get(idx));
+            sendMessageToClient(it.getValue().getId(),JsonUtil.toJson(p));
+
+            idx++;
+        }
+        for(int i=0;i<3;i++){
+            String num = questionMaker.operand.get(questionMaker.random.nextInt(10));
+            if(!ansValid.contains(num)) {
+
+                payLoad p = new payLoad();
+                p.setType("dummy rat");
+
+                float randX = questionMaker.random.nextFloat(18f) - 9f; //(-9,9)
+                float randY = questionMaker.random.nextFloat(18f) - 9f;
+
+                p.setPosition(Arrays.asList(randX, randY, 0f));
+                p.setAnswer(num);
+
+                broadcastMessage( JsonUtil.toJson(p));
+            }
         }
     }
 

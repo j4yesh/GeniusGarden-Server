@@ -14,5 +14,7 @@ public class payLoad {
     private String type;
     private List<Float> position;
     private Float rotation;
+    private String question;
+    private String answer;
 
 }
