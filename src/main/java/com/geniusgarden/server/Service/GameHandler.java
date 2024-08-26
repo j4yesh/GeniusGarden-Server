@@ -139,7 +139,7 @@ public class GameHandler extends TextWebSocketHandler {
             p.setQuestion(question.get(idx));
             p.setAnswer(answer.get(idx));
             ansValid.add(answer.get(idx));
-            sendMessageToClient(it.getValue().getId(),JsonUtil.toJson(p));
+            broadcastMessage(JsonUtil.toJson(p));
 
             idx++;
         }
