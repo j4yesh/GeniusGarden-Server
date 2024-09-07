@@ -16,5 +16,5 @@ public class payLoad {
     private Float rotation;
     private String question;
     private String answer;
-
+    private String name;
 }

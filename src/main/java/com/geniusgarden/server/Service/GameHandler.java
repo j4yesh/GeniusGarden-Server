@@ -1,5 +1,6 @@
 package com.geniusgarden.server.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geniusgarden.server.Model.payLoad;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,7 @@ public class GameHandler extends TextWebSocketHandler {
         pl.setSocketId(session.getId());
         pl.setType("new player");
         pl.setPosition(spawnPosition);
+        pl.setName(session.getId());
         this.spawnPosition.set(0,this.spawnPosition.get(0) + 2f);
         pl.setRotation(0f);
 
@@ -39,7 +41,8 @@ public class GameHandler extends TextWebSocketHandler {
         broadcastMessage(session, JsonUtil.toJson(pl));
 
         pl.setType("self id");
-
+        pl.setSocketId(session.getId());
+        pl.setName("serverN");
         sendMessageToClient(session.getId(),JsonUtil.toJson(pl));
         for(Map.Entry<String,WebSocketSession> it: sessions.entrySet()){
             String key = it.getKey();
@@ -49,18 +52,38 @@ public class GameHandler extends TextWebSocketHandler {
                 p.setSocketId(key);
                 p.setType("new player");
                 p.setPosition(Arrays.asList(0f,0f,0f));
+                p.setName(it.getValue().getId());
                 p.setRotation(0f);
                 sendMessageToClient(session.getId(), JsonUtil.toJson(p));
             }
         }
+
     }
 
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
         String payload = (String) message.getPayload();
 //        System.out.println("Received payload: " + payload);
-        broadcastMessage(session, payload);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        payLoad pl = objectMapper.readValue(payload, payLoad.class);
+
+        if(pl.getType().equals("position")){
+            broadcastMessage(session, payload);
+        }else if(pl.getType().equals("addRat")){
+            System.out.println("Received payload: " + payload);
+
+            payLoad pl1 = new payLoad();
+            pl1.setType("addRat");
+            pl1.setQuestion(session.getId());
+            pl1.setAnswer(pl.getAnswer());
+            broadcastMessage(JsonUtil.toJson(pl1));
+        }
+
     }
+
+
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
@@ -84,7 +107,6 @@ public class GameHandler extends TextWebSocketHandler {
                 } catch (Exception e) {
                     System.err.println("Error sending message to session ID: " + session.getId());
                     e.printStackTrace();
-
                 }
             }
         }
@@ -112,7 +134,6 @@ public class GameHandler extends TextWebSocketHandler {
             } catch (Exception e) {
                 System.err.println("Error sending message to session ID: " + sessionId);
                 e.printStackTrace();
-
             }
         } else {
             System.err.println("Session ID: " + sessionId + " not found or not open.");
