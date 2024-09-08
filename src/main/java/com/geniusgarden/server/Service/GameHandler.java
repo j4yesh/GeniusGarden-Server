@@ -54,7 +54,7 @@ public class GameHandler extends TextWebSocketHandler {
 
         pl.setType("self id");
         pl.setSocketId(session.getId());
-        pl.setName("serverN");
+        pl.setName("You");
         sendMessageToClient(roomId,session.getId(),JsonUtil.toJson(pl));
         for(Map.Entry<String,WebSocketSession> it: sessions.entrySet()){
             String key = it.getKey();
