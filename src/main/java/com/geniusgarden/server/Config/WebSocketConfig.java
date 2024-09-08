@@ -18,8 +18,9 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        logger.info("Initiating the server!");
-        registry.addHandler(new GameHandler(), "/game").setAllowedOrigins("*");
-        logger.info("Socket hosted successfully!");
+        registry.addHandler(new GameHandler(), "/game/{roomId}").setAllowedOrigins("*");
     }
+
+
+
 }
