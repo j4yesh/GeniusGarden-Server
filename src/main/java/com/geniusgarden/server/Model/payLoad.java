@@ -17,4 +17,6 @@ public class payLoad {
     private String question;
     private String answer;
     private String name;
+    private String data;
+
 }

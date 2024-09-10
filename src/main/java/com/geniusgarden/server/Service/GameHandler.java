@@ -90,13 +90,20 @@ public class GameHandler extends TextWebSocketHandler {
         if(pl.getType().equals("position")){
             broadcastMessage(session, payload);
         }else if(pl.getType().equals("addRat")){
-            logger.info("Received payload: " + payload);
+//            logger.info("Received payload: " + payload);
 
             payLoad pl1 = new payLoad();
             pl1.setType("addRat");
             pl1.setQuestion(session.getId());
             pl1.setAnswer(pl.getAnswer());
             broadcastMessage(roomId,JsonUtil.toJson(pl1));
+        }else if(pl.getType().equals("startGame")){
+            payLoad pl1 = new payLoad();
+            pl1.setType("startGame");
+            Map<String,WebSocketSession> refRoom = rooms.get(roomId);
+            for(Map.Entry<String,WebSocketSession> it: refRoom.entrySet()){
+                sendMessageToClient(roomId,it.getValue().getId(),JsonUtil.toJson(pl1));
+            }
         }
 
     }
