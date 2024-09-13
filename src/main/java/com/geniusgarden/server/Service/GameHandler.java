@@ -22,6 +22,7 @@ public class GameHandler extends TextWebSocketHandler {
 //    private static final Map<String, WebSocketSession> sessions = new HashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(GameHandler.class);
     private static final Map<String, Map<String,WebSocketSession>> rooms = new HashMap<>();
+    private static final Map<String, String> idNameMap = new HashMap<>();
 
     private final List<Float> spawnPosition = Arrays.asList(-7.0f, 2.0f, 0.0f);
 
@@ -48,7 +49,7 @@ public class GameHandler extends TextWebSocketHandler {
         this.spawnPosition.set(0,this.spawnPosition.get(0) + 2f);
         pl.setRotation(0f);
 
-        logger.warn("new player joined "+session.getId());
+        logger.info("new player joined "+session.getId());
 
         broadcastMessage(session, JsonUtil.toJson(pl));
 
@@ -80,7 +81,6 @@ public class GameHandler extends TextWebSocketHandler {
         Map<String, WebSocketSession> roomSessions = rooms.get(roomId);
 
 
-
         String payload = (String) message.getPayload();
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -100,10 +100,28 @@ public class GameHandler extends TextWebSocketHandler {
         }else if(pl.getType().equals("startGame")){
             payLoad pl1 = new payLoad();
             pl1.setType("startGame");
-            Map<String,WebSocketSession> refRoom = rooms.get(roomId);
-            for(Map.Entry<String,WebSocketSession> it: refRoom.entrySet()){
-                sendMessageToClient(roomId,it.getValue().getId(),JsonUtil.toJson(pl1));
+//            Map<String,WebSocketSession> refRoom = rooms.get(roomId);
+//            for(Map.Entry<String,WebSocketSession> it: refRoom.entrySet()){
+//                sendMessageToClient(roomId,it.getValue().getId(),JsonUtil.toJson(pl1));
+//            }
+            broadcastMessage(roomId,JsonUtil.toJson(pl1));
+        }else if(pl.getType().equals("setName")){
+            logger.info("received a setName call with name : "+pl.getData());
+            payLoad pl1 = new payLoad();
+            pl1.setType("setName");
+            pl1.setSocketId(session.getId());
+            pl1.setData(pl.getData());
+            broadcastMessage(roomId,JsonUtil.toJson(pl1));
+
+            for(Map.Entry<String,String> it: idNameMap.entrySet()){
+                payLoad pl2 = new payLoad();
+                pl2.setType("setName");
+                pl2.setSocketId(it.getKey());
+                pl2.setData(it.getValue());
+                sendMessageToClient(roomId,session.getId(),JsonUtil.toJson(pl2));
             }
+
+            idNameMap.put(session.getId(),pl1.getData());
         }
 
     }
@@ -115,15 +133,33 @@ public class GameHandler extends TextWebSocketHandler {
         String roomId = getRoomId(session);
         Map<String,WebSocketSession> sessions = rooms.get(roomId);;
 
+        logger.info("The player is leaving : "+session.getId());
+
         sessions.remove(session.getId());
+
+        rooms.put(roomId, sessions);
+
+        if(sessions.isEmpty()){
+            rooms.remove(roomId);
+            idNameMap.remove(session.getId());
+            logger.info("The room is closed with id : "+roomId);
+            return ;
+        }
+
+        synchronized (this.spawnPosition) {
+            this.spawnPosition.set(0, this.spawnPosition.get(0) - 2);
+        }
+
         payLoad pl = new payLoad();
         pl.setSocketId(session.getId());
         pl.setType("leave player");
-        this.spawnPosition.set(0,this.spawnPosition.get(0) - 2);
+        pl.setName(idNameMap.get(session.getId()));
+        idNameMap.remove(session.getId());
 
         logger.info("player left: "+session.getId());
 
-        broadcastMessage(session, JsonUtil.toJson(pl));
+        broadcastMessage(roomId,JsonUtil.toJson(pl));
+
     }
 
     private void broadcastMessage(WebSocketSession senderSession, String message) {
@@ -164,7 +200,7 @@ public class GameHandler extends TextWebSocketHandler {
             try {
                 TextMessage textMessage = new TextMessage(message);
                 session.sendMessage(textMessage);
-                logger.info("Message sent to session ID: " + sessionId);
+//                logger.info("Message sent to session ID: " + sessionId);
             } catch (Exception e) {
                 logger.warn("Error sending message to session ID: " + sessionId);
                 e.printStackTrace();
@@ -176,10 +212,10 @@ public class GameHandler extends TextWebSocketHandler {
 
     @Scheduled(fixedRate = 5000)
     public void spawnRat() {
-        logger.info("sending the spawn rat message1" + rooms.entrySet().size());
+//        logger.info("sending the spawn rat message1" + rooms.entrySet().size());
 
         for (Map.Entry<String, Map<String, WebSocketSession>> sessions : rooms.entrySet()) {
-            logger.info("sending the spawn rat message2");
+//            logger.info("sending the spawn rat message2");
 
             List<String> question = new ArrayList<>();
             List<String> answer = new ArrayList<>();
@@ -192,7 +228,7 @@ public class GameHandler extends TextWebSocketHandler {
 
             for (Map.Entry<String, WebSocketSession> it : sessions.getValue().entrySet()) {
                 WebSocketSession session = it.getValue();
-                logger.info("sending the spawn rat message3");
+//                logger.info("sending the spawn rat message3");
                 if (session.isOpen()) {
                     payLoad p = new payLoad();
                     p.setSocketId(session.getId());
