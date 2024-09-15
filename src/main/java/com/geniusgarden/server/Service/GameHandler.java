@@ -2,6 +2,8 @@ package com.geniusgarden.server.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geniusgarden.server.Model.payLoad;
+import com.geniusgarden.server.Model.player;
+import com.geniusgarden.server.Model.result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +24,12 @@ public class GameHandler extends TextWebSocketHandler {
 //    private static final Map<String, WebSocketSession> sessions = new HashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(GameHandler.class);
     private static final Map<String, Map<String,WebSocketSession>> rooms = new HashMap<>();
-    private static final Map<String, String> idNameMap = new HashMap<>();
+    private static final Map<String, player> idPlayerMap = new HashMap<>();
     private final List<Float> spawnPosition = Arrays.asList(-7.0f, 2.0f, 0.0f);
     private static int playerLimitForRoom = 3;
+    private static int maxAns = 2;
+
+
 
     @Autowired
     questionMaker questionMaker;
@@ -121,41 +126,73 @@ public class GameHandler extends TextWebSocketHandler {
 
         payLoad pl = objectMapper.readValue(payload, payLoad.class);
 
-        if(pl.getType().equals("position")){
-            broadcastMessage(session, payload);
-        }else if(pl.getType().equals("addRat")){
+        switch (pl.getType()) {
+            case "position" -> broadcastMessage(session, payload);
+            case "addRat" -> {
 //            logger.info("Received payload: " + payload);
+                player p = idPlayerMap.get(pl.getSocketId());
+                p.setRatCnt(p.getRatCnt() + 1);
+                if (p.getRatCnt() == maxAns) {
+                    List<player> playersWithinRoom = new ArrayList<>();
+                    for(Map.Entry<String,WebSocketSession> it : rooms.get(roomId).entrySet()){
+                        player p1 = idPlayerMap.get(it.getValue().getId());
+                        playersWithinRoom.add(p1);
+                    }
+                    playersWithinRoom.sort(new Comparator<player>() {
+                        @Override
+                        public int compare(player o1, player o2) {
+                            return (o1.getRatCnt()<o2.getRatCnt())?1:0;
+                        }
+                    });
+                    for(int i=0;i<playersWithinRoom.size();i++){
+                        result r = new result();
+                        r.setName(playersWithinRoom.get(i).getName());
+                        r.setSocketId(playersWithinRoom.get(i).getSocketId());
+                        r.setRank(i+1);
+                        String resultString = JsonUtil.toJson(r);
 
-            payLoad pl1 = new payLoad();
-            pl1.setType("addRat");
-            pl1.setQuestion(session.getId());
-            pl1.setAnswer(pl.getAnswer());
-            broadcastMessage(roomId,JsonUtil.toJson(pl1));
-        }else if(pl.getType().equals("startGame")){
-            payLoad pl1 = new payLoad();
-            pl1.setType("startGame");
+                        payLoad pl1 = new payLoad();
+                        pl1.setType("result");
+                        pl1.setName(r.getName());
+                        pl1.setSocketId(r.getSocketId());
+                        pl1.setData(resultString);
+                        sendMessageToClient(roomId,r.getSocketId(),JsonUtil.toJson(pl1));
+                    }
+
+                }
+                payLoad pl1 = new payLoad();
+                pl1.setType("addRat");
+                pl1.setQuestion(session.getId());
+                pl1.setAnswer(pl.getAnswer());
+                broadcastMessage(roomId, JsonUtil.toJson(pl1));
+            }
+            case "startGame" -> {
+                payLoad pl1 = new payLoad();
+                pl1.setType("startGame");
 //            Map<String,WebSocketSession> refRoom = rooms.get(roomId);
 //            for(Map.Entry<String,WebSocketSession> it: refRoom.entrySet()){
 //                sendMessageToClient(roomId,it.getValue().getId(),JsonUtil.toJson(pl1));
 //            }
-            broadcastMessage(roomId,JsonUtil.toJson(pl1));
-        }else if(pl.getType().equals("setName")){
-            logger.info("received a setName call with name : "+pl.getData());
-            payLoad pl1 = new payLoad();
-            pl1.setType("setName");
-            pl1.setSocketId(session.getId());
-            pl1.setData(pl.getData());
-            broadcastMessage(roomId,JsonUtil.toJson(pl1));
-
-            for(Map.Entry<String,String> it: idNameMap.entrySet()){
-                payLoad pl2 = new payLoad();
-                pl2.setType("setName");
-                pl2.setSocketId(it.getKey());
-                pl2.setData(it.getValue());
-                sendMessageToClient(roomId,session.getId(),JsonUtil.toJson(pl2));
+                broadcastMessage(roomId, JsonUtil.toJson(pl1));
             }
+            case "setName" -> {
+                logger.info("received a setName call with name : " + pl.getData());
+                payLoad pl1 = new payLoad();
+                pl1.setType("setName");
+                pl1.setSocketId(session.getId());
+                pl1.setData(pl.getData());
+                broadcastMessage(roomId, JsonUtil.toJson(pl1));
 
-            idNameMap.put(session.getId(),pl1.getData());
+                for (Map.Entry<String, player> it : idPlayerMap.entrySet()) {
+                    payLoad pl2 = new payLoad();
+                    pl2.setType("setName");
+                    pl2.setSocketId(it.getKey());
+                    pl2.setData(it.getValue().getName());
+                    sendMessageToClient(roomId, session.getId(), JsonUtil.toJson(pl2));
+                }
+
+                idPlayerMap.put(session.getId(), new player(pl.getName(), roomId, session.getId(), 0));
+            }
         }
 
     }
@@ -174,7 +211,7 @@ public class GameHandler extends TextWebSocketHandler {
 
         if(sessions.isEmpty()){
             rooms.remove(roomId);
-            idNameMap.remove(session.getId());
+            idPlayerMap.remove(session.getId());
             logger.info("The room is closed with id : "+roomId);
             return ;
         }
@@ -186,8 +223,8 @@ public class GameHandler extends TextWebSocketHandler {
         payLoad pl = new payLoad();
         pl.setSocketId(session.getId());
         pl.setType("leave player");
-        pl.setName(idNameMap.get(session.getId()));
-        idNameMap.remove(session.getId());
+        pl.setName(idPlayerMap.get(session.getId()).getName());
+        idPlayerMap.remove(session.getId());
 
         logger.info("player left: "+session.getId());
 
