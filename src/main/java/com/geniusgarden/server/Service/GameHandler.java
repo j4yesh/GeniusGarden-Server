@@ -28,7 +28,7 @@ public class GameHandler extends TextWebSocketHandler {
     private final List<Float> spawnPosition = Arrays.asList(-7.0f, 2.0f, 0.0f);
     private static int playerLimitForRoom = 3;
     private static int maxAns = 2;
-
+    private static float arenaSide = 18f;
 
 
     @Autowired
@@ -137,25 +137,33 @@ public class GameHandler extends TextWebSocketHandler {
                     for(Map.Entry<String,WebSocketSession> it : rooms.get(roomId).entrySet()){
                         player p1 = idPlayerMap.get(it.getValue().getId());
                         playersWithinRoom.add(p1);
+                        logger.info(it.toString());
                     }
                     playersWithinRoom.sort(new Comparator<player>() {
                         @Override
                         public int compare(player o1, player o2) {
-                            return (o1.getRatCnt()<o2.getRatCnt())?1:0;
+                            return (o1.getRatCnt()>o2.getRatCnt())?1:0;
                         }
                     });
+                    logger.info("playerWithinRoom: ");
+                    logger.info(playersWithinRoom.toString());
                     for(int i=0;i<playersWithinRoom.size();i++){
                         result r = new result();
                         r.setName(playersWithinRoom.get(i).getName());
                         r.setSocketId(playersWithinRoom.get(i).getSocketId());
-                        r.setRank(i+1);
-                        String resultString = JsonUtil.toJson(r);
+                        r.setRank(playersWithinRoom.size()-i);
+                        for(player p1 : playersWithinRoom){
+                            r.addRank(p1.getName());
+                        }
 
+                        String resultString = JsonUtil.toJson(r);
+                        logger.info("p1: "+resultString);
                         payLoad pl1 = new payLoad();
                         pl1.setType("result");
-                        pl1.setName(r.getName());
                         pl1.setSocketId(r.getSocketId());
                         pl1.setData(resultString);
+
+                        logger.info(pl1.toString());
                         sendMessageToClient(roomId,r.getSocketId(),JsonUtil.toJson(pl1));
                     }
 
@@ -191,7 +199,7 @@ public class GameHandler extends TextWebSocketHandler {
                     sendMessageToClient(roomId, session.getId(), JsonUtil.toJson(pl2));
                 }
 
-                idPlayerMap.put(session.getId(), new player(pl.getName(), roomId, session.getId(), 0));
+                idPlayerMap.put(session.getId(), new player(pl.getData(), roomId, session.getId(), 0));
             }
         }
 
@@ -317,8 +325,9 @@ public class GameHandler extends TextWebSocketHandler {
                     p.setSocketId(session.getId());
                     p.setType("spawn rat");
 
-                    Float randX = questionMaker.random.nextFloat(18f) - 9f; // (-9,9)
-                    Float randY = questionMaker.random.nextFloat(18f) - 9f;
+                    float halfArenaSide = arenaSide/2;
+                    Float randX = questionMaker.random.nextFloat(arenaSide) - halfArenaSide; // (-9,9)
+                    Float randY = questionMaker.random.nextFloat(arenaSide) - halfArenaSide;
 
                     p.setPosition(Arrays.asList(randX, randY, 0f));
                     p.setQuestion(question.get(idx));
@@ -340,10 +349,10 @@ public class GameHandler extends TextWebSocketHandler {
                     payLoad p = new payLoad();
                     p.setType("dummy rat");
 
-                    float randX = questionMaker.random.nextFloat(18f) - 9f; // (-9,9)
-                    float randY = questionMaker.random.nextFloat(18f) - 9f;
-                    logger.info("randX randY : "+randX+" "+randY);
-                    p.setPosition(Arrays.asList(randX, randY, 0f));
+                    Float randX = questionMaker.random.nextFloat(18f) - 9f; // (-9,9)
+                    Float randY = questionMaker.random.nextFloat(18f) - 9f;
+                    p.setPosition(Arrays.asList(randX, randY, 0.0f));
+
                     p.setAnswer(num);
                     try {
                         broadcastMessage(roomId, JsonUtil.toJson(p));

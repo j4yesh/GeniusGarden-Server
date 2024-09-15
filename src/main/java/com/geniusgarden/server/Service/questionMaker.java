@@ -47,5 +47,4 @@ public class questionMaker {
             answer.add(ans);
         }
     }
-
 }
