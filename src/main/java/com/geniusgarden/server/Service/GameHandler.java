@@ -27,8 +27,8 @@ public class GameHandler extends TextWebSocketHandler {
     private static final Map<String, player> idPlayerMap = new HashMap<>();
     private final List<Float> spawnPosition = Arrays.asList(-7.0f, 2.0f, 0.0f);
     private static int playerLimitForRoom = 3;
-    private static int maxAns = 2;
-    private static float arenaSide = 18f;
+    private static int maxAns = 10;
+    private static float arenaSide = 19f;
 
 
     @Autowired
@@ -80,8 +80,11 @@ public class GameHandler extends TextWebSocketHandler {
         pl.setType("new player");
 
 
-        Float randX = questionMaker.random.nextFloat(18f) - 9f; // (-9,9)
-        Float randY = questionMaker.random.nextFloat(18f) - 9f;
+        float halfArenaSide = arenaSide/2;
+        Float randX = questionMaker.random.nextFloat(arenaSide) - halfArenaSide;
+        Float randY = questionMaker.random.nextFloat(arenaSide) - halfArenaSide;
+
+
         pl.setPosition(Arrays.asList(randX, randY, 0.0f));
 
 
@@ -166,7 +169,8 @@ public class GameHandler extends TextWebSocketHandler {
                         logger.info(pl1.toString());
                         sendMessageToClient(roomId,r.getSocketId(),JsonUtil.toJson(pl1));
                     }
-
+//                    rooms.remove(roomId);
+                    return;
                 }
                 payLoad pl1 = new payLoad();
                 pl1.setType("addRat");
@@ -200,6 +204,15 @@ public class GameHandler extends TextWebSocketHandler {
                 }
 
                 idPlayerMap.put(session.getId(), new player(pl.getData(), roomId, session.getId(), 0));
+            }
+            case "removeRat"->{
+                logger.info("removeRat arrived");
+                payLoad pl2 = new payLoad();
+                pl2.setType("removeRat");
+                pl2.setSocketId(session.getId());
+                player p = idPlayerMap.get(session.getId());
+                p.setRatCnt(Math.max(0,p.getRatCnt()-1));
+                broadcastMessage(roomId,JsonUtil.toJson(pl2));
             }
         }
 
@@ -326,7 +339,7 @@ public class GameHandler extends TextWebSocketHandler {
                     p.setType("spawn rat");
 
                     float halfArenaSide = arenaSide/2;
-                    Float randX = questionMaker.random.nextFloat(arenaSide) - halfArenaSide; // (-9,9)
+                    Float randX = questionMaker.random.nextFloat(arenaSide) - halfArenaSide;
                     Float randY = questionMaker.random.nextFloat(arenaSide) - halfArenaSide;
 
                     p.setPosition(Arrays.asList(randX, randY, 0f));
@@ -349,8 +362,10 @@ public class GameHandler extends TextWebSocketHandler {
                     payLoad p = new payLoad();
                     p.setType("dummy rat");
 
-                    Float randX = questionMaker.random.nextFloat(18f) - 9f; // (-9,9)
-                    Float randY = questionMaker.random.nextFloat(18f) - 9f;
+                    float halfArenaSide = arenaSide/2;
+                    Float randX = questionMaker.random.nextFloat(arenaSide) - halfArenaSide;
+                    Float randY = questionMaker.random.nextFloat(arenaSide) - halfArenaSide;
+
                     p.setPosition(Arrays.asList(randX, randY, 0.0f));
 
                     p.setAnswer(num);
