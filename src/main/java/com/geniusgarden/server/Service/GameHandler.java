@@ -7,7 +7,6 @@ import com.geniusgarden.server.Model.result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -27,8 +26,8 @@ public class GameHandler extends TextWebSocketHandler {
     private static final Map<String, player> idPlayerMap = new HashMap<>();
     private final List<Float> spawnPosition = Arrays.asList(-7.0f, 2.0f, 0.0f);
     private static int playerLimitForRoom = 3;
-    private static int maxAns = 10;
-    private static float arenaSide = 19f;
+    private static int maxAns = 5;
+    private static float arenaSide = 38f;
 
 
     @Autowired
@@ -135,21 +134,9 @@ public class GameHandler extends TextWebSocketHandler {
 //            logger.info("Received payload: " + payload);
                 player p = idPlayerMap.get(pl.getSocketId());
                 p.setRatCnt(p.getRatCnt() + 1);
+                List<player> playersWithinRoom = getRankList(roomId);
                 if (p.getRatCnt() == maxAns) {
-                    List<player> playersWithinRoom = new ArrayList<>();
-                    for(Map.Entry<String,WebSocketSession> it : rooms.get(roomId).entrySet()){
-                        player p1 = idPlayerMap.get(it.getValue().getId());
-                        playersWithinRoom.add(p1);
-                        logger.info(it.toString());
-                    }
-                    playersWithinRoom.sort(new Comparator<player>() {
-                        @Override
-                        public int compare(player o1, player o2) {
-                            return (o1.getRatCnt()>o2.getRatCnt())?1:0;
-                        }
-                    });
-                    logger.info("playerWithinRoom: ");
-                    logger.info(playersWithinRoom.toString());
+
                     for(int i=0;i<playersWithinRoom.size();i++){
                         result r = new result();
                         r.setName(playersWithinRoom.get(i).getName());
@@ -172,10 +159,13 @@ public class GameHandler extends TextWebSocketHandler {
 //                    rooms.remove(roomId);
                     return;
                 }
+
                 payLoad pl1 = new payLoad();
                 pl1.setType("addRat");
                 pl1.setQuestion(session.getId());
                 pl1.setAnswer(pl.getAnswer());
+                pl1.setData(JsonUtil.toJson(playersWithinRoom));
+
                 broadcastMessage(roomId, JsonUtil.toJson(pl1));
             }
             case "startGame" -> {
@@ -206,12 +196,16 @@ public class GameHandler extends TextWebSocketHandler {
                 idPlayerMap.put(session.getId(), new player(pl.getData(), roomId, session.getId(), 0));
             }
             case "removeRat"->{
-                logger.info("removeRat arrived");
+                player p = idPlayerMap.get(session.getId());
+                p.setRatCnt(Math.max(0,p.getRatCnt()-1));
+
                 payLoad pl2 = new payLoad();
                 pl2.setType("removeRat");
                 pl2.setSocketId(session.getId());
-                player p = idPlayerMap.get(session.getId());
-                p.setRatCnt(Math.max(0,p.getRatCnt()-1));
+
+                List<String> sortedRank = getRankListStr(roomId);
+                pl2.setData(JsonUtil.toJson(sortedRank));
+
                 broadcastMessage(roomId,JsonUtil.toJson(pl2));
             }
         }
@@ -392,6 +386,32 @@ public class GameHandler extends TextWebSocketHandler {
         }
         return uri.split("/")[5];
 
+    }
+
+    private List<player> getRankList(String roomId){
+        List<player> playersWithinRoom = new ArrayList<>();
+        for(Map.Entry<String,WebSocketSession> it : rooms.get(roomId).entrySet()){
+            player p1 = idPlayerMap.get(it.getValue().getId());
+            playersWithinRoom.add(p1);
+        }
+        playersWithinRoom.sort(new Comparator<player>() {
+            @Override
+            public int compare(player o1, player o2) {
+                return (o1.getRatCnt()>o2.getRatCnt())?1:0;
+            }
+        });
+        return playersWithinRoom;
+    }
+
+
+
+    private List<String> getRankListStr(String roomId){
+        List<player> playersWithinRoom = getRankList(roomId);
+            List<String> strPlayer = new ArrayList<>();
+            for(player it: playersWithinRoom){
+                strPlayer.add(it.getName());
+            }
+        return strPlayer;
     }
 
 }
