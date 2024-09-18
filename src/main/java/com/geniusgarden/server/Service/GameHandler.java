@@ -16,14 +16,22 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class GameHandler extends TextWebSocketHandler {
 
 //    private static final Map<String, WebSocketSession> sessions = new HashMap<>();
+
     private static final Logger logger = LoggerFactory.getLogger(GameHandler.class);
-    private static final Map<String, Map<String,WebSocketSession>> rooms = new HashMap<>();
-    private static final Map<String, player> idPlayerMap = new HashMap<>();
+//    private static final Map<String, Map<String,WebSocketSession>> rooms = new HashMap<>();
+
+    private static final Map<String, Map<String, WebSocketSession>> rooms = new ConcurrentHashMap<>();
+    private static final Map<String, player> idPlayerMap = new ConcurrentHashMap<>();
+
+
+//    private static final Map<String, player> idPlayerMap = new HashMap<>();
+
     private final List<Float> spawnPosition = Arrays.asList(-7.0f, 2.0f, 0.0f);
     private static int playerLimitForRoom = 3;
     private static int maxAns = 5;
