@@ -3,11 +3,13 @@ package com.geniusgarden.server.Model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@Component
 @NoArgsConstructor
 @AllArgsConstructor
 public class result {
@@ -19,4 +21,6 @@ public class result {
     public void addRank(String rank) {
             ranking.add(rank);
     }
+
+
 }
