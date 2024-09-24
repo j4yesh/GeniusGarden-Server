@@ -418,6 +418,9 @@ public class GameHandler extends TextWebSocketHandler {
                             wrongAns = questionMaker.operand.get(questionmaker.random.nextInt(10));
                         }
                         p.setAnswer(wrongAns);
+                        randX = questionmaker.random.nextFloat(arenaSide) - halfArenaSide;
+                        randY = questionmaker.random.nextFloat(arenaSide) - halfArenaSide;
+                        p.setPosition(Arrays.asList(randX, randY, 0f));
                         broadcastMessage(roomId, JsonUtil.toJson(p));
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -532,14 +535,22 @@ public class GameHandler extends TextWebSocketHandler {
 
     public void removeRat(String socketId,String roomId,String ans){
 
-        payLoad pl2 = new payLoad();
-        pl2.setType("removeRat");
-        pl2.setSocketId(socketId);
-        pl2.setAnswer(ans);
+        payLoad pl = new payLoad();
+        pl.setType("removeRat");
+        pl.setSocketId(socketId);
+        pl.setAnswer(ans);
         List<String> sortedRank = getRankListStr(roomId);
-        pl2.setData(JsonUtil.toJson(sortedRank));
+        pl.setData(JsonUtil.toJson(sortedRank));
 
-        broadcastMessage(roomId,JsonUtil.toJson(pl2));
+        broadcastMessage(roomId,JsonUtil.toJson(pl));
+    }
+
+    public void removeRatFromArena(String socketId, String roomId, String key) {
+        payLoad pl = new payLoad();
+        pl.setType("removeRatFromArena");
+        pl.setSocketId(socketId);
+        pl.setAnswer(key);
+        broadcastMessage(roomId,JsonUtil.toJson(pl));
     }
 }
 

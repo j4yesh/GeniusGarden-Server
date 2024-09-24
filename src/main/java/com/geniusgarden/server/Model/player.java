@@ -17,7 +17,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class player {
     public static float pickRange = 8f;
-    private static float speed = 0.3f;
+    private static float speed = 0.2f;
     private String name;
     private String SocketId;
     private String roomId;
@@ -80,11 +80,12 @@ public class player {
         for (Map.Entry<String, vector3> it : ratcontainer.getRats().entrySet()) {
 //            GameHandler.logger.info(String.valueOf(Util.calculateDistance(currentPos, it.getValue())));
             if (Util.calculateDistance(currentPos, it.getValue()) <= pickRange) {
+                gamehandler.removeRatFromArena(this.SocketId,this.roomId,it.getKey());
+                ratcontainer.disappearRat(it.getKey());
                 if (it.getKey().equals(answer)) {
-                    this.ratcontainer.disappearRat(answer);
                     gamehandler.addRat(this.SocketId,this.roomId,this.answer);
                 } else {
-                    ratcontainer.disappearRat(it.getKey());
+//                    GameHandler.logger.info("wrong answer hit");
                     this.ratCnt=Math.max(0,ratCnt-1);
                     gamehandler.removeRat(this.SocketId,this.roomId,this.answer);
                 }
