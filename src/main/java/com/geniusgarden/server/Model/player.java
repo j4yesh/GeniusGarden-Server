@@ -16,8 +16,8 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class player {
-    public static float pickRange = 5f;
-
+    public static float pickRange = 8f;
+    private static float speed = 0.3f;
     private String name;
     private String SocketId;
     private String roomId;
@@ -51,7 +51,7 @@ public class player {
             while (active) {
                 Update();
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(20);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
@@ -70,18 +70,23 @@ public class player {
         if (newPosition.getX() > bottomLeft.getX() && newPosition.getX() < topRight.getX()
                 && newPosition.getY() > bottomLeft.getY() && newPosition.getY() < topRight.getY()) {
             currentPos.setPosition(newPosition.getX(), newPosition.getY());
-        } else {
+        } else if(this.ratCnt!=0){
 //            gamehandler.sendMessageFromServer("removeRat");
-            this.ratCnt--;
+            ratcontainer.disappearRat(this.answer);
+            this.ratCnt=Math.max(0,ratCnt-1);
+            gamehandler.removeRat(this.SocketId,this.roomId,this.answer);
         }
 
         for (Map.Entry<String, vector3> it : ratcontainer.getRats().entrySet()) {
+//            GameHandler.logger.info(String.valueOf(Util.calculateDistance(currentPos, it.getValue())));
             if (Util.calculateDistance(currentPos, it.getValue()) <= pickRange) {
                 if (it.getKey().equals(answer)) {
-                    gamehandler.sendMessageFromServer("addRat");
+                    this.ratcontainer.disappearRat(answer);
+                    gamehandler.addRat(this.SocketId,this.roomId,this.answer);
                 } else {
-                    gamehandler.sendMessageFromServer("removeRat");
                     ratcontainer.disappearRat(it.getKey());
+                    this.ratCnt=Math.max(0,ratCnt-1);
+                    gamehandler.removeRat(this.SocketId,this.roomId,this.answer);
                 }
             }
         }
@@ -100,8 +105,8 @@ public class player {
     }
 
     public void Input(List<Float> position) {
-        this.movement.setX(position.get(0));
-        this.movement.setY(position.get(1));
+        this.movement.setX(position.get(0) * speed);
+        this.movement.setY(position.get(1) * speed);
     }
 
 }

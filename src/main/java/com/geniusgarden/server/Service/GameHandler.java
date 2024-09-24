@@ -38,10 +38,7 @@ public class GameHandler extends TextWebSocketHandler {
 
 
     @Autowired
-    questionMaker questionMaker;
-
-    @Autowired
-    ratContainer ratcontainer;
+    questionMaker questionmaker;
 
 
 
@@ -97,8 +94,8 @@ public class GameHandler extends TextWebSocketHandler {
 
         float boundrySide=arenaSide-1;
         float halfBoundSide = boundrySide/2;
-        Float randX = questionMaker.random.nextFloat(boundrySide) - halfBoundSide;
-        Float randY = questionMaker.random.nextFloat(boundrySide) - halfBoundSide;
+        Float randX = questionmaker.random.nextFloat(boundrySide) - halfBoundSide;
+        Float randY = questionmaker.random.nextFloat(boundrySide) - halfBoundSide;
 
         pl.setPosition(Arrays.asList(randX, randY, 0.0f));
         pl.setRotation(0f);
@@ -379,7 +376,7 @@ public class GameHandler extends TextWebSocketHandler {
             int n = sessions.getValue().size();
             String roomId = sessions.getKey();
 
-            questionMaker.makeQuestion(question, answer, n);
+            questionmaker.makeQuestion(question, answer, n);
             int idx = 0;
             Set<String> ansValid = new HashSet<>();
 
@@ -395,18 +392,32 @@ public class GameHandler extends TextWebSocketHandler {
                     p.setType("spawn rat");
 
                     float halfArenaSide = arenaSide/2;
-                    Float randX = questionMaker.random.nextFloat(arenaSide) - halfArenaSide;
-                    Float randY = questionMaker.random.nextFloat(arenaSide) - halfArenaSide;
+                    Float randX = questionmaker.random.nextFloat(arenaSide) - halfArenaSide;
+                    Float randY = questionmaker.random.nextFloat(arenaSide) - halfArenaSide;
 
                     p.setPosition(Arrays.asList(randX, randY, 0f));
                     p.setQuestion(question.get(idx));
                     p.setAnswer(answer.get(idx));
                     ansValid.add(answer.get(idx));
 
+                    player player1 = idPlayerMap.get(it.getKey());
+                    player1.setAnswer(answer.get(idx));
+
                     vector3 rat = new vector3(randX,randY);
-                    ratcontainer.addRat(answer.get(idx),rat);
+                    roomContainerMap.get(roomId).addRat(answer.get(idx),rat);
 
                     try {
+                        broadcastMessage(roomId, JsonUtil.toJson(p));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    try {
+                        String wrongAns = questionMaker.operand.get(questionmaker.random.nextInt(10));
+                        while(wrongAns.equals(answer.get(idx))){
+                            wrongAns = questionMaker.operand.get(questionmaker.random.nextInt(10));
+                        }
+                        p.setAnswer(wrongAns);
                         broadcastMessage(roomId, JsonUtil.toJson(p));
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -416,14 +427,14 @@ public class GameHandler extends TextWebSocketHandler {
                 }
             }
 //            for (int i = 0; i < 3; i++) {
-//                String num = questionMaker.operand.get(questionMaker.random.nextInt(10));
+//                String num = questionmaker.operand.get(questionmaker.random.nextInt(10));
 //                if (!ansValid.contains(num)) {
 //                    payLoad p = new payLoad();
 //                    p.setType("dummy rat");
 //
 //                    float halfArenaSide = arenaSide/2;
-//                    Float randX = questionMaker.random.nextFloat(arenaSide) - halfArenaSide;
-//                    Float randY = questionMaker.random.nextFloat(arenaSide) - halfArenaSide;
+//                    Float randX = questionmaker.random.nextFloat(arenaSide) - halfArenaSide;
+//                    Float randY = questionmaker.random.nextFloat(arenaSide) - halfArenaSide;
 //
 //                    p.setPosition(Arrays.asList(randX, randY, 0.0f));
 //
@@ -481,7 +492,55 @@ public class GameHandler extends TextWebSocketHandler {
         logger.info(msgType);
     }
 
+    public void addRat(String socketId,String roomId,String ans){
+        player p = idPlayerMap.get(socketId);
+        p.setRatCnt(p.getRatCnt() + 1);
+        List<player> playersWithinRoom = getRankList(roomId);
+        if (p.getRatCnt() == maxAns) {
 
+            for(int i=0;i<playersWithinRoom.size();i++){
+                result r = new result();
+                r.setName(playersWithinRoom.get(i).getName());
+                r.setSocketId(playersWithinRoom.get(i).getSocketId());
+                r.setRank(playersWithinRoom.size()-i);
+                for(player p1 : playersWithinRoom){
+                    r.addRank(p1.getName());
+                }
+
+                String resultString = JsonUtil.toJson(r);
+                log.info("p1: "+resultString);
+                payLoad pl1 = new payLoad();
+                pl1.setType("result");
+                pl1.setSocketId(r.getSocketId());
+                pl1.setData(resultString);
+
+                log.info(pl1.toString());
+                sendMessageToClient(roomId,r.getSocketId(),JsonUtil.toJson(pl1));
+            }
+//                    rooms.remove(roomId);
+            return;
+        }
+
+        payLoad pl1 = new payLoad();
+        pl1.setType("addRat");
+        pl1.setQuestion(socketId);
+        pl1.setAnswer(ans);
+        pl1.setData(JsonUtil.toJson(playersWithinRoom));
+
+        broadcastMessage(roomId, JsonUtil.toJson(pl1));
+    }
+
+    public void removeRat(String socketId,String roomId,String ans){
+
+        payLoad pl2 = new payLoad();
+        pl2.setType("removeRat");
+        pl2.setSocketId(socketId);
+        pl2.setAnswer(ans);
+        List<String> sortedRank = getRankListStr(roomId);
+        pl2.setData(JsonUtil.toJson(sortedRank));
+
+        broadcastMessage(roomId,JsonUtil.toJson(pl2));
+    }
 }
 
 

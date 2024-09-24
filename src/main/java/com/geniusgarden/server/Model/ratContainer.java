@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class ratContainer {
 
-    Map<String,vector3> rats ;
+    private Map<String,vector3> rats = new HashMap<>();
 
     public void disappearRat(String key) {
         rats.remove(key);
