@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class ratContainer {
 
-    private Map<String,vector3> rats = new HashMap<>();
+    private Map<String,vector3> rats = new ConcurrentHashMap<>();
 
     public void disappearRat(String key) {
         rats.remove(key);

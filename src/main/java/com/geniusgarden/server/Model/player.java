@@ -16,7 +16,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class player {
-    public static float pickRange = 8f;
+    public static float pickRange = 5f;
     private static float speed = 0.2f;
     private String name;
     private String SocketId;
@@ -72,24 +72,32 @@ public class player {
             currentPos.setPosition(newPosition.getX(), newPosition.getY());
         } else if(this.ratCnt!=0){
 //            gamehandler.sendMessageFromServer("removeRat");
-            ratcontainer.disappearRat(this.answer);
-            this.ratCnt=Math.max(0,ratCnt-1);
-            gamehandler.removeRat(this.SocketId,this.roomId,this.answer);
+//            ratcontainer.disappearRat(this.answer);
+//            this.ratCnt=Math.max(0,ratCnt-1);
+//            gamehandler.removeRatdisappearRat(this.answer);
+//            this.ratCnt=Math.max(0,ratCnt-1);
+//            gamehandler.removeRat(this.SocketId,this.roomId,this.answer);
         }
 
-        for (Map.Entry<String, vector3> it : ratcontainer.getRats().entrySet()) {
+        try {
+            for (Map.Entry<String, vector3> it : ratcontainer.getRats().entrySet()) {
 //            GameHandler.logger.info(String.valueOf(Util.calculateDistance(currentPos, it.getValue())));
-            if (Util.calculateDistance(currentPos, it.getValue()) <= pickRange) {
-                gamehandler.removeRatFromArena(this.SocketId,this.roomId,it.getKey());
-                ratcontainer.disappearRat(it.getKey());
-                if (it.getKey().equals(answer)) {
-                    gamehandler.addRat(this.SocketId,this.roomId,this.answer);
-                } else {
+                if (Util.calculateDistance(currentPos, it.getValue()) <= pickRange) {
+                    gamehandler.removeRatFromArena(this.SocketId, this.roomId, it.getKey());
+                    if (!it.getKey().equals(answer)) {
 //                    GameHandler.logger.info("wrong answer hit");
-                    this.ratCnt=Math.max(0,ratCnt-1);
-                    gamehandler.removeRat(this.SocketId,this.roomId,this.answer);
+                        this.ratCnt = Math.max(0, ratCnt - 1);
+                        gamehandler.removeRat(this.SocketId, this.roomId, this.answer);
+                        GameHandler.logger.info(it.getKey() + " "+ this.answer + "wrong");
+                    } else {
+                        gamehandler.addRat(this.SocketId, this.roomId, this.answer);
+                        GameHandler.logger.info(it.getKey() + " "+ this.answer + "correct");
+                    }
+                    ratcontainer.disappearRat(it.getKey());
                 }
             }
+        }catch(Exception e){
+            GameHandler.logger.info(e.getMessage());
         }
 
         payLoad pl = new payLoad();
@@ -106,8 +114,22 @@ public class player {
     }
 
     public void Input(List<Float> position) {
-        this.movement.setX(position.get(0) * speed);
-        this.movement.setY(position.get(1) * speed);
+        float x = position.get(0);
+        float y = position.get(1);
+
+        float magnitude = (float) Math.sqrt(x * x + y * y);
+
+        if (magnitude > 0) {
+            float normalizedX = x / magnitude;
+            float normalizedY = y / magnitude;
+
+            this.movement.setX(normalizedX * speed);
+            this.movement.setY(normalizedY * speed);
+        } else {
+            this.movement.setX(0);
+            this.movement.setY(0);
+        }
     }
+
 
 }

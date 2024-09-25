@@ -404,7 +404,7 @@ public class GameHandler extends TextWebSocketHandler {
                     player1.setAnswer(answer.get(idx));
 
                     vector3 rat = new vector3(randX,randY);
-                    roomContainerMap.get(roomId).addRat(answer.get(idx),rat);
+                    currentContainer.addRat(answer.get(idx),rat);
 
                     try {
                         broadcastMessage(roomId, JsonUtil.toJson(p));
@@ -412,15 +412,18 @@ public class GameHandler extends TextWebSocketHandler {
                         e.printStackTrace();
                     }
 
+                    String wrongAns = questionMaker.operand.get(questionmaker.random.nextInt(10));
+                    while(wrongAns.equals(answer.get(idx))){
+                        wrongAns = questionMaker.operand.get(questionmaker.random.nextInt(10));
+                    }
+                    p.setAnswer(wrongAns);
+                    randX = questionmaker.random.nextFloat(arenaSide) - halfArenaSide;
+                    randY = questionmaker.random.nextFloat(arenaSide) - halfArenaSide;
+                    p.setPosition(Arrays.asList(randX, randY, 0f));
+                    vector3 rat1 = new vector3(randX,randY);
+                    roomContainerMap.get(roomId).addRat(wrongAns,rat1);
+
                     try {
-                        String wrongAns = questionMaker.operand.get(questionmaker.random.nextInt(10));
-                        while(wrongAns.equals(answer.get(idx))){
-                            wrongAns = questionMaker.operand.get(questionmaker.random.nextInt(10));
-                        }
-                        p.setAnswer(wrongAns);
-                        randX = questionmaker.random.nextFloat(arenaSide) - halfArenaSide;
-                        randY = questionmaker.random.nextFloat(arenaSide) - halfArenaSide;
-                        p.setPosition(Arrays.asList(randX, randY, 0f));
                         broadcastMessage(roomId, JsonUtil.toJson(p));
                     } catch (Exception e) {
                         e.printStackTrace();
