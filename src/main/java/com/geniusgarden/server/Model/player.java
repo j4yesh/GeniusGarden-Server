@@ -11,6 +11,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Data
 @NoArgsConstructor
@@ -34,6 +36,9 @@ public class player {
 
     private ratContainer ratcontainer;
     private boolean active = true;
+
+    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+
     public player(String name, String roomId, String SocketId, int i, vector3 iniPos, vector3 topRight, vector3 bottomLeft, vector3 vector3, ratContainer ratcontainer, String answer, String question) {
         this.name = name;
         this.roomId = roomId;
@@ -46,43 +51,41 @@ public class player {
         this.question = question;
     }
 
-    public void Setup(){
-        Thread updateThread = new Thread(() -> {
-            while (active) {
-                Update();
-                try {
-                    Thread.sleep(20);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
+    public void Setup() {
+        executorService.submit(this::updateLoop);
+    }
+
+    private void updateLoop() {
+        while (active) {
+            Update();
+            try {
+                Thread.sleep(20); // Consider using a constant for this magic number
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
-        });
-        updateThread.start();
+        }
     }
 
     public void Update() {
         vector3 newPosition = new vector3(
                 currentPos.getX() + movement.getX(),
-                currentPos.getY() + movement.getY(),
-                0.5f
+                currentPos.getY() + movement.getY()
         );
 
         if (newPosition.getX() > bottomLeft.getX() && newPosition.getX() < topRight.getX()
                 && newPosition.getY() > bottomLeft.getY() && newPosition.getY() < topRight.getY()) {
             currentPos.setPosition(newPosition.getX(), newPosition.getY());
         } else if(this.ratCnt!=0){
-//            gamehandler.sendMessageFromServer("removeRat");
-//            ratcontainer.disappearRat(this.answer);
-//            this.ratCnt=Math.max(0,ratCnt-1);
+            gamehandler.sendMessageFromServer("removeRat");
+            this.ratCnt=Math.max(0,ratCnt-1);
 //            gamehandler.removeRatdisappearRat(this.answer);
-//            this.ratCnt=Math.max(0,ratCnt-1);
-//            gamehandler.removeRat(this.SocketId,this.roomId,this.answer);
+            gamehandler.removeRat(this.SocketId,this.roomId,this.answer);
         }
 
         try {
             for (Map.Entry<String, vector3> it : ratcontainer.getRats().entrySet()) {
 //            GameHandler.logger.info(String.valueOf(Util.calculateDistance(currentPos, it.getValue())));
-                if (Util.calculateDistance(currentPos, it.getValue()) <= pickRange) {
+                if (Util.calculateDistance(currentPos, it.getValue()) < pickRange) {
                     gamehandler.removeRatFromArena(this.SocketId, this.roomId, it.getKey());
                     if (!it.getKey().equals(answer)) {
 //                    GameHandler.logger.info("wrong answer hit");
@@ -104,7 +107,11 @@ public class player {
         pl.setType("position");
         pl.setPosition(currentPos.getList());
         pl.setSocketId(this.SocketId);
-        pl.setRotation(0f);
+
+        float angle = (float) Math.atan2(movement.getY(), movement.getX());
+        float angleInDegrees = (float) (angle * (180.0 / Math.PI));
+        pl.setRotation(angleInDegrees);
+
         try {
             gamehandler.broadcastMessage(roomId, JsonUtil.toJson(pl));
         }catch(Exception e){

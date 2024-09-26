@@ -137,17 +137,19 @@ public class GameHandler extends TextWebSocketHandler {
         log.info("new player joined "+session.getId());
 
         broadcastMessage(session, JsonUtil.toJson(pl));
+        //except self broadcast to everyone
 
         pl.setType("self id");
         pl.setSocketId(session.getId());
         sendMessageToClient(roomId,session.getId(),JsonUtil.toJson(pl));
+
         for(Map.Entry<String,WebSocketSession> it: sessions.entrySet()){
             String key = it.getKey();
             if(!key.equals(session.getId())){
                 payLoad p = new payLoad();
                 p.setSocketId(key);
                 p.setType("new player");
-                p.setPosition(Arrays.asList(0f,0f,0f));
+                p.setPosition(Arrays.asList(randX,randY,0f));
                 p.setName(it.getValue().getId());
                 p.setRotation(0f);
                 sendMessageToClient(roomId,session.getId(), JsonUtil.toJson(p));
@@ -189,7 +191,7 @@ public class GameHandler extends TextWebSocketHandler {
                         result r = new result();
                         r.setName(playersWithinRoom.get(i).getName());
                         r.setSocketId(playersWithinRoom.get(i).getSocketId());
-                        r.setRank(playersWithinRoom.size()-i);
+                        r.setRank(i+1);
                         for(player p1 : playersWithinRoom){
                             r.addRank(p1.getName());
                         }
@@ -236,6 +238,9 @@ public class GameHandler extends TextWebSocketHandler {
                 pl1.setSocketId(session.getId());
                 pl1.setData(pl.getData());
                 broadcastMessage(roomId, JsonUtil.toJson(pl1));
+
+                player Player = idPlayerMap.get(session.getId());
+                Player.setName(pl.getData());
 
                 for (Map.Entry<String, player> it : idPlayerMap.entrySet()) {
                     if(!it.getKey().equals(session.getId())) {
@@ -320,8 +325,6 @@ public class GameHandler extends TextWebSocketHandler {
     }
 
     private void sendMessageToClientWithoutRoom(WebSocketSession session, String message) {
-        String roomId = getRoomId(session);
-
         TextMessage textMessage = new TextMessage(message);
         try {
             session.sendMessage(textMessage);
@@ -347,22 +350,26 @@ public class GameHandler extends TextWebSocketHandler {
         }
     }
 
-    private synchronized void sendMessageToClient(String roomId,String sessionId, String message) {
-        Map<String,WebSocketSession> sessions = rooms.get(roomId);
+    private synchronized void sendMessageToClient(String roomId, String sessionId, String message) {
+        Map<String, WebSocketSession> sessions = rooms.get(roomId);
+        if (sessions == null) {
+            log.warn("Room ID: " + roomId + " not found.");
+            return;
+        }
         WebSocketSession session = sessions.get(sessionId);
-        if (session != null && session.isOpen()) {
-            try {
-                TextMessage textMessage = new TextMessage(message);
-                session.sendMessage(textMessage);
-//                logger.info("Message sent to session ID: " + sessionId);
-            } catch (Exception e) {
-                log.warn("Error sending message to session ID: " + sessionId);
-                e.printStackTrace();
-            }
-        } else {
+        if (session == null || !session.isOpen()) {
             log.warn("Session ID: " + sessionId + " not found or not open.");
+            return;
+        }
+        try {
+            TextMessage textMessage = new TextMessage(message);
+            session.sendMessage(textMessage);
+            log.debug("Message successfully sent to session ID: " + sessionId);
+        } catch (Exception e) {
+            log.error("Error sending message to session ID: " + sessionId, e);
         }
     }
+
 
     @Scheduled(fixedRate = 5000)
     public void spawnRat() {
@@ -398,6 +405,7 @@ public class GameHandler extends TextWebSocketHandler {
                     p.setPosition(Arrays.asList(randX, randY, 0f));
                     p.setQuestion(question.get(idx));
                     p.setAnswer(answer.get(idx));
+                    p.setSocketId(session.getId());
                     ansValid.add(answer.get(idx));
 
                     player player1 = idPlayerMap.get(it.getKey());
@@ -420,6 +428,8 @@ public class GameHandler extends TextWebSocketHandler {
                     randX = questionmaker.random.nextFloat(arenaSide) - halfArenaSide;
                     randY = questionmaker.random.nextFloat(arenaSide) - halfArenaSide;
                     p.setPosition(Arrays.asList(randX, randY, 0f));
+                    p.setSocketId("wrong!");
+
                     vector3 rat1 = new vector3(randX,randY);
                     roomContainerMap.get(roomId).addRat(wrongAns,rat1);
 
