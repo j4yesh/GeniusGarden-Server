@@ -93,6 +93,7 @@ public class player {
                         gamehandler.removeRat(this.SocketId, this.roomId, this.answer);
                         GameHandler.logger.info(it.getKey() + " "+ this.answer + "wrong");
                     } else {
+                        this.ratCnt++;
                         gamehandler.addRat(this.SocketId, this.roomId, this.answer);
                         GameHandler.logger.info(it.getKey() + " "+ this.answer + "correct");
                     }

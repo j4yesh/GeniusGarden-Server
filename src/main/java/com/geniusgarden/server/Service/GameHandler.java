@@ -188,6 +188,8 @@ public class GameHandler extends TextWebSocketHandler {
                 if (p.getRatCnt() == maxAns) {
 
                     for(int i=0;i<playersWithinRoom.size();i++){
+                        playersWithinRoom.get(i).setActive(false);
+
                         result r = new result();
                         r.setName(playersWithinRoom.get(i).getName());
                         r.setSocketId(playersWithinRoom.get(i).getSocketId());
@@ -206,6 +208,7 @@ public class GameHandler extends TextWebSocketHandler {
                         log.info(pl1.toString());
                         sendMessageToClient(roomId,r.getSocketId(),JsonUtil.toJson(pl1));
                     }
+
 //                    rooms.remove(roomId);
                     return;
                 }
@@ -487,9 +490,10 @@ public class GameHandler extends TextWebSocketHandler {
         playersWithinRoom.sort(new Comparator<player>() {
             @Override
             public int compare(player o1, player o2) {
-                return (o1.getRatCnt()>o2.getRatCnt())?1:0;
+                return Integer.compare(o2.getRatCnt(), o1.getRatCnt());
             }
         });
+
         return playersWithinRoom;
     }
 
@@ -510,9 +514,8 @@ public class GameHandler extends TextWebSocketHandler {
 
     public void addRat(String socketId,String roomId,String ans){
         player p = idPlayerMap.get(socketId);
-        p.setRatCnt(p.getRatCnt() + 1);
         List<player> playersWithinRoom = getRankList(roomId);
-        if (p.getRatCnt() == maxAns) {
+        if (p.getRatCnt() >= maxAns) {
 
             for(int i=0;i<playersWithinRoom.size();i++){
                 result r = new result();
@@ -536,12 +539,12 @@ public class GameHandler extends TextWebSocketHandler {
 //                    rooms.remove(roomId);
             return;
         }
-
+        List<String> rankingStr = getRankListStr(roomId);
         payLoad pl1 = new payLoad();
         pl1.setType("addRat");
         pl1.setQuestion(socketId);
         pl1.setAnswer(ans);
-        pl1.setData(JsonUtil.toJson(playersWithinRoom));
+        pl1.setData(JsonUtil.toJson(rankingStr));
 
         broadcastMessage(roomId, JsonUtil.toJson(pl1));
     }
