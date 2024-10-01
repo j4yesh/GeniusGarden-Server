@@ -1,5 +1,6 @@
 package com.geniusgarden.server.Service;
 
+import ch.qos.logback.core.joran.spi.EventPlayer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geniusgarden.server.Model.*;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ public class GameHandler extends TextWebSocketHandler {
 
     private final List<Float> spawnPosition = Arrays.asList(-7.0f, 2.0f, 0.0f);
     private static final int playerLimitForRoom = 3;
-    private static final int maxAns = 5;
+    private static final int maxAns = 2;
     private static final float arenaSide = 21f;
 
 
@@ -125,6 +126,8 @@ public class GameHandler extends TextWebSocketHandler {
 
         player.setRoomId(roomId);
         player.setSocketId(session.getId());
+
+        player.setType(conType);
 
         if(!roomContainerMap.containsKey(roomId)){
             roomContainerMap.put(roomId, new ratContainer());
@@ -269,6 +272,26 @@ public class GameHandler extends TextWebSocketHandler {
                 pl2.setData(JsonUtil.toJson(sortedRank));
 
                 broadcastMessage(roomId,JsonUtil.toJson(pl2));
+            }
+            case "rematch"->{
+                player p = idPlayerMap.get(session.getId());
+                if(p.getType().equals("join")){
+                    payLoad pl1 = new payLoad();
+                    pl1.setType("Error");
+                    pl1.setData("Only host can rematch");
+                    sendMessageToClient(roomId,session.getId(),JsonUtil.toJson(pl1));
+                }else if(p.getType().equals("host")){
+                    payLoad pl2 = new payLoad();
+                    pl2.setType("rematch");
+                    broadcastMessage(roomId,JsonUtil.toJson(pl2));
+                    List<player> playersWithinRoom = getRankList(roomId);
+                    for(player pla : playersWithinRoom){
+                        pla.setRatCnt(0);
+                        pla.setActive(true);
+                        pla.Setup();
+                    }
+
+                }
             }
         }
 
@@ -522,9 +545,12 @@ public class GameHandler extends TextWebSocketHandler {
                 r.setName(playersWithinRoom.get(i).getName());
                 r.setSocketId(playersWithinRoom.get(i).getSocketId());
                 r.setRank(playersWithinRoom.size()-i);
+
                 for(player p1 : playersWithinRoom){
                     r.addRank(p1.getName());
                 }
+
+                playersWithinRoom.get(i).setActive(false);
 
                 String resultString = JsonUtil.toJson(r);
                 log.info("p1: "+resultString);

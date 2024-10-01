@@ -30,6 +30,7 @@ public class player {
     private vector3 currentPos;
     private String answer;
     private String question;
+    private String type;
 
 //    @Autowired
     private GameHandler gamehandler;
@@ -52,6 +53,7 @@ public class player {
     }
 
     public void Setup() {
+        GameHandler.logger.info(" settup begin..");
         executorService.submit(this::updateLoop);
     }
 
