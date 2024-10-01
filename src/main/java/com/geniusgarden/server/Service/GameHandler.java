@@ -31,10 +31,9 @@ public class GameHandler extends TextWebSocketHandler {
 
 //    private static final Map<String, player> idPlayerMap = new HashMap<>();
 
-    private final List<Float> spawnPosition = Arrays.asList(-7.0f, 2.0f, 0.0f);
     private static final int playerLimitForRoom = 3;
     private static final int maxAns = 2;
-    private static final float arenaSide = 21f;
+    private static final float arenaSide = 20f;
 
 
 
@@ -539,16 +538,16 @@ public class GameHandler extends TextWebSocketHandler {
         player p = idPlayerMap.get(socketId);
         List<player> playersWithinRoom = getRankList(roomId);
         if (p.getRatCnt() >= maxAns) {
+            result r = new result();
+            for(player p1 : playersWithinRoom){
+                r.addRank(p1.getName());
+            }
 
             for(int i=0;i<playersWithinRoom.size();i++){
-                result r = new result();
                 r.setName(playersWithinRoom.get(i).getName());
                 r.setSocketId(playersWithinRoom.get(i).getSocketId());
-                r.setRank(playersWithinRoom.size()-i);
+                r.setRank(i+1);
 
-                for(player p1 : playersWithinRoom){
-                    r.addRank(p1.getName());
-                }
 
                 playersWithinRoom.get(i).setActive(false);
 

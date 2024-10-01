@@ -35,4 +35,6 @@ build/
 ### Environment Files ###
 .env
 .env.*
-env.cs
+env.cs00
+
+application.properties
