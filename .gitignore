@@ -37,4 +37,5 @@ build/
 .env.*
 env.cs00
 
+# Ignore application.properties of Spring Boot
 application.properties
