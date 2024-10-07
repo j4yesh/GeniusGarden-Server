@@ -17,10 +17,10 @@ FROM openjdk:17-jdk-slim
 WORKDIR /app
 
 # Copy the packaged JAR file from the build image
-COPY --from=build /app/target/server-0.0.1-SNAPSHOT.jar.original /app/geniusgarden.jar
+COPY --from=build /app/target/server-0.0.1-SNAPSHOT.jar.original /app/server.jar
 
 # Expose the application port
 EXPOSE 8080
 
 # Command to run the JAR file
-ENTRYPOINT ["java", "-jar", "geniusgarden.jar"]
+ENTRYPOINT ["java", "-jar", "server.jar"]
