@@ -38,14 +38,18 @@
 			<artifactId>spring-boot-starter-data-mongodb</artifactId>
 		</dependency>
 
+		<!-- Spring Security -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
 
 
-
-<!--		&lt;!&ndash; Spring Session &ndash;&gt;-->
-<!--		<dependency>-->
-<!--			<groupId>org.springframework.session</groupId>-->
-<!--			<artifactId>spring-session-core</artifactId>-->
-<!--		</dependency>-->
+		<!-- Spring Session -->
+		<dependency>
+			<groupId>org.springframework.session</groupId>
+			<artifactId>spring-session-core</artifactId>
+		</dependency>
 
 		<!-- Lombok -->
 		<dependency>
@@ -73,7 +77,17 @@
 			<artifactId>spring-boot-starter-thymeleaf</artifactId>
 		</dependency>
 
-
+		<!-- Testing Dependencies -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
