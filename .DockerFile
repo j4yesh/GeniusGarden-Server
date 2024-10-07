@@ -17,7 +17,7 @@ FROM openjdk:17-jdk-slim
 WORKDIR /app
 
 # Copy the packaged JAR file from the build image
-COPY --from=build /app/target/geniusgardenserver-0.0.1-SNAPSHOT.jar demo.jar
+COPY --from=build /app/target/geniusgarden-0.0.1-SNAPSHOT.jar demo.jar
 
 # Expose the application port
 EXPOSE 8080
