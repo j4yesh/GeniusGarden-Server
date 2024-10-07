@@ -1,4 +1,4 @@
-package com.geniusgarden.server.Model;
+package com.geniusgarden.server.GameplayModel;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

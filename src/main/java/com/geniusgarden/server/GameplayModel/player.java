@@ -1,4 +1,4 @@
-package com.geniusgarden.server.Model;
+package com.geniusgarden.server.GameplayModel;
 
 import com.geniusgarden.server.Service.GameHandler;
 import com.geniusgarden.server.Service.JsonUtil;
@@ -6,8 +6,6 @@ import com.geniusgarden.server.Service.Util;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.List;
 import java.util.Map;

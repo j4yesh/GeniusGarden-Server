@@ -1,6 +1,6 @@
 package com.geniusgarden.server.Service;
 
-import com.geniusgarden.server.Model.vector3;
+import com.geniusgarden.server.GameplayModel.vector3;
 
 public class Util {
     public static float calculateDistance(float x1, float y1, float x2, float y2) {

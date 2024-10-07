@@ -1,8 +1,7 @@
 package com.geniusgarden.server.Service;
 
-import ch.qos.logback.core.joran.spi.EventPlayer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.geniusgarden.server.Model.*;
+import com.geniusgarden.server.GameplayModel.*;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
