@@ -23,4 +23,4 @@ COPY --from=build /app/target/server-0.0.1-SNAPSHOT.jar demo.jar
 EXPOSE 8081
 
 # Command to run the JAR file
-ENTRYPOINT ["java", "-jar", "geniusgarden.jar"]
+ENTRYPOINT ["java", "-jar", "demo.jar"]
