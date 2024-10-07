@@ -1,24 +1,26 @@
-# Stage 1: Build the application
-FROM maven:3.9.5-openjdk-17-slim AS build
+# Use an official Maven image to build the application
+FROM maven:3.8.5-openjdk-17 AS build
 
-# Set the working directory
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the pom.xml and source code
-COPY pom.xml .
-COPY src ./src
+# Copy the current directory contents into the container
+COPY . .
 
-# Build the application
+# Build the application without running tests
 RUN mvn clean package -DskipTests
 
-# Stage 2: Create the runtime image
+# Use a different image to run the application
 FROM openjdk:17-jdk-slim
 
-# Set the working directory
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the built JAR from the previous stage
-COPY --from=build /app/target/server-0.0.1-SNAPSHOT.jar ./geniusgarden.jar
+# Copy the packaged JAR file from the build image
+COPY --from=build /app/target/server-0.0.1-SNAPSHOT.jar demo.jar
 
-# Command to run the application
-ENTRYPOINT ["java", "-jar", "geniusgarden.jar"]
+# Expose the application port
+EXPOSE 8081
+
+# Command to run the JAR file
+ENTRYPOINT ["java", "-jar", "server.jar"]
