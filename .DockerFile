@@ -1,5 +1,5 @@
-# Use a base image with JDK
-FROM openjdk:17-jdk-slim as build
+# Stage 1: Build the application
+FROM maven:3.9.5-openjdk-17-slim AS build
 
 # Set the working directory
 WORKDIR /app
@@ -11,7 +11,7 @@ COPY src ./src
 # Build the application
 RUN mvn clean package -DskipTests
 
-# Second stage to create the runtime image
+# Stage 2: Create the runtime image
 FROM openjdk:17-jdk-slim
 
 # Set the working directory
