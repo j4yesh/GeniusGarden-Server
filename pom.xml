@@ -33,10 +33,10 @@
 		</dependency>
 
 		<!-- MongoDB -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-mongodb</artifactId>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-data-mongodb</artifactId>-->
+<!--		</dependency>-->
 
 
 		<!-- Spring Session -->
@@ -66,10 +66,10 @@
 		</dependency>
 
 		<!-- Thymeleaf -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-thymeleaf</artifactId>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-thymeleaf</artifactId>-->
+<!--		</dependency>-->
 
 		<!-- Testing Dependencies -->
 		<dependency>
@@ -81,6 +81,7 @@
 	</dependencies>
 
 	<build>
+		<finalName>geniusgarden</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

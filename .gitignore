@@ -27,7 +27,7 @@ target/
 /.nb-gradle/
 build/
 !**/src/main/**/build/
-!**/src/test/**/build/
+!**/src/test/**/build/w
 
 ### VS Code ###
 .vscode/
@@ -36,6 +36,8 @@ build/
 .env
 .env.*
 env.cs00
+env.java
+.env.java
 
 # # Ignore application.properties of Spring Boot
 # application.properties

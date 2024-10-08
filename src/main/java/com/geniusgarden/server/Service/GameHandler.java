@@ -2,6 +2,7 @@ package com.geniusgarden.server.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geniusgarden.server.GameplayModel.*;
+import com.geniusgarden.server.Model.Notification;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,22 +25,20 @@ public class GameHandler extends TextWebSocketHandler {
 
     //    private static final Map<String, Map<String,WebSocketSession>> rooms = new HashMap<>();
     public static final Logger logger = LoggerFactory.getLogger(GameHandler.class);
-    private static final Map<String, Map<String, WebSocketSession>> rooms = new ConcurrentHashMap<>();
-    private static final Map<String, player> idPlayerMap = new ConcurrentHashMap<>();
+    public static final Map<String, Map<String, WebSocketSession>> rooms = new ConcurrentHashMap<>();
+    public static final Map<String, player> idPlayerMap = new ConcurrentHashMap<>();
     private static final Map<String, ratContainer> roomContainerMap = new ConcurrentHashMap<>();
 
 //    private static final Map<String, player> idPlayerMap = new HashMap<>();
 
-    private static final int playerLimitForRoom = 3;
-    private static final int maxAns = 2;
+    public static int playerLimitForRoom = 3;
+    public static int maxAns = 5;
     private static final float arenaSide = 20f;
 
 
 
     @Autowired
     questionMaker questionmaker;
-
-
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -592,6 +591,31 @@ public class GameHandler extends TextWebSocketHandler {
         pl.setAnswer(key);
         broadcastMessage(roomId,JsonUtil.toJson(pl));
     }
+
+    public boolean sendNotification(Notification notification) {
+        String playerId = notification.getPlayerId();
+
+        if (idPlayerMap.containsKey(playerId)) {
+            payLoad payload = new payLoad();
+            payload.setType("notification");
+            payload.setData(notification.getMessage());
+            payload.setSocketId(playerId);
+
+            for (Map.Entry<String, Map<String, WebSocketSession>> roomEntry : rooms.entrySet()) {
+                Map<String, WebSocketSession> playerSessions = roomEntry.getValue();
+
+                if (playerSessions.containsKey(playerId)) {
+                    WebSocketSession playerSession = playerSessions.get(playerId);
+
+                    sendMessageToClientWithoutRoom(playerSession,JsonUtil.toJson( payload));
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
 }
 
 

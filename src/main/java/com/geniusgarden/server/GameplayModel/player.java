@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
 @AllArgsConstructor
 public class player {
     public static float pickRange = 5f;
-    private static float speed = 0.2f;
+    public static float speed = 0.2f;
     private String name;
     private String SocketId;
     private String roomId;
