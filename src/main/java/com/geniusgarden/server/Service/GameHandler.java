@@ -25,6 +25,7 @@ public class GameHandler extends TextWebSocketHandler {
 
     //    private static final Map<String, Map<String,WebSocketSession>> rooms = new HashMap<>();
     public static final Logger logger = LoggerFactory.getLogger(GameHandler.class);
+
     public static final Map<String, Map<String, WebSocketSession>> rooms = new ConcurrentHashMap<>();
     public static final Map<String, player> idPlayerMap = new ConcurrentHashMap<>();
     private static final Map<String, ratContainer> roomContainerMap = new ConcurrentHashMap<>();
@@ -42,8 +43,8 @@ public class GameHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        String conType = getRequestType(session);
-        String roomId = getRoomId(session);
+        String conType = getRequestType(session); //join/host
+        String roomId = getRoomId(session); //ex. 5f5f4
 
         log.info(conType + ": connection type.");
 

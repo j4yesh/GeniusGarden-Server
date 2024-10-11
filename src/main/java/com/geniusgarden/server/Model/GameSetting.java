@@ -13,6 +13,7 @@ public class GameSetting {
     private float pickRange;
     private float speed;
     private String key;
+
     public GameSetting(int playerLimitForRoom, int maxAns, float pickRange, float speed) {
         this.playerLimit=playerLimitForRoom;
         this.maxAns=maxAns;
