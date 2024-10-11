@@ -19,7 +19,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/server")
-public class Game {
+public class GameStructure {
 
     @Autowired
     GameHandler gameHandler;
