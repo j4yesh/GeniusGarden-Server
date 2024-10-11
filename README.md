@@ -5,6 +5,7 @@ This repository contains the server-side implementation of a **multiplayer game*
 The project was initially prototyped using **Cocos Creator** and **TypeScript** but later transitioned to Unity for enhanced performance and flexibility. Unlike backend-as-a-service (BaaS) solutions like Photon, this server is custom-built, emphasizing a **client-server architecture** and **multithreading** to handle concurrent player sessions.
 
 ## Table of Contents
+- [Goals](#goals)
 - [Features](#features)
 - [Architecture](#architecture)
 - [Gameplay Overview](#gameplay-overview)
@@ -12,6 +13,14 @@ The project was initially prototyped using **Cocos Creator** and **TypeScript** 
 - [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
+
+## Goals
+- **Excellent Game Mechanism**
+- **Game Engagement**
+- **Online Multiplayer**
+- **Learning Objective**
+- **Player Performance Tracker**
+- **Global All-Time Leaderboard**
 
 ## Features
 - **Custom Backend**: Developed with **Spring Boot** and WebSockets for real-time communication.
