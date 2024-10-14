@@ -29,6 +29,8 @@ public class player {
     private String answer;
     private String question;
     private String type;
+    private int correct;
+    private int wrong;
 
 //    @Autowired
     private GameHandler gamehandler;
@@ -78,6 +80,7 @@ public class player {
         } else if(this.ratCnt!=0){
             gamehandler.sendMessageFromServer("removeRat");
             this.ratCnt=Math.max(0,ratCnt-1);
+            this.wrong++;
 //            gamehandler.removeRatdisappearRat(this.answer);
             gamehandler.removeRat(this.SocketId,this.roomId,this.answer);
         }
@@ -90,10 +93,12 @@ public class player {
                     if (!it.getKey().equals(answer)) {
 //                    GameHandler.logger.info("wrong answer hit");
                         this.ratCnt = Math.max(0, ratCnt - 1);
+                        this.wrong++;
                         gamehandler.removeRat(this.SocketId, this.roomId, this.answer);
                         GameHandler.logger.info(it.getKey() + " "+ this.answer + "wrong");
                     } else {
                         this.ratCnt++;
+                        this.correct++;
                         gamehandler.addRat(this.SocketId, this.roomId, this.answer);
                         GameHandler.logger.info(it.getKey() + " "+ this.answer + "correct");
                     }
@@ -124,7 +129,6 @@ public class player {
     public void Input(List<Float> position) {
         float x = position.get(0);
         float y = position.get(1);
-
         float magnitude = (float) Math.sqrt(x * x + y * y);
 
         if (magnitude > 0) {

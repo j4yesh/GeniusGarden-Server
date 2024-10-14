@@ -26,7 +26,7 @@ public class JWTServiceImpl {
                 .setSubject(username)
                 .claim("username", username)
                 .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() +5 * 60 * 1000))
+                .setExpiration(new Date(now.getTime() + 3 * 60 * 60 * 1000))
                 .signWith(secretKey)
                 .compact();
     }

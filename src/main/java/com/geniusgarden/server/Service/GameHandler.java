@@ -1,8 +1,12 @@
 package com.geniusgarden.server.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.geniusgarden.server.Controller.GameRepoController;
 import com.geniusgarden.server.GameplayModel.*;
 import com.geniusgarden.server.Model.Notification;
+import com.geniusgarden.server.Model.Result;
+import com.geniusgarden.server.Model.ValidityDTO;
+import com.geniusgarden.server.env;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,16 +25,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class GameHandler extends TextWebSocketHandler {
 
-//    private static final Map<String, WebSocketSession> sessions = new HashMap<>();
-
-    //    private static final Map<String, Map<String,WebSocketSession>> rooms = new HashMap<>();
     public static final Logger logger = LoggerFactory.getLogger(GameHandler.class);
 
     public static final Map<String, Map<String, WebSocketSession>> rooms = new ConcurrentHashMap<>();
     public static final Map<String, player> idPlayerMap = new ConcurrentHashMap<>();
     private static final Map<String, ratContainer> roomContainerMap = new ConcurrentHashMap<>();
 
-//    private static final Map<String, player> idPlayerMap = new HashMap<>();
 
     public static int playerLimitForRoom = 3;
     public static int maxAns = 5;
@@ -41,6 +41,12 @@ public class GameHandler extends TextWebSocketHandler {
     @Autowired
     questionMaker questionmaker;
 
+    @Autowired
+    GameRepoController gameRepo;
+
+    @Autowired
+    publicRoomService publicroomService;
+
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         String conType = getRequestType(session); //join/host
@@ -48,7 +54,7 @@ public class GameHandler extends TextWebSocketHandler {
 
         log.info(conType + ": connection type.");
 
-        if ( !rooms.containsKey(roomId) && conType.equals("join")) {
+        if ( roomId.length()>5 && !rooms.containsKey(roomId) && conType.equals("join")) {
             payLoad errorPl = new payLoad();
             errorPl.setType("Error");
             errorPl.setData("Enter valid room id");
@@ -57,7 +63,7 @@ public class GameHandler extends TextWebSocketHandler {
             session.close();
             return;
         }
-        if(rooms.containsKey(roomId) && conType.equals("host")){
+        if(roomId.length()>5 && rooms.containsKey(roomId) && conType.equals("host")){
             payLoad errorPl = new payLoad();
             errorPl.setType("Error");
             errorPl.setData("please try again to host.");
@@ -65,7 +71,7 @@ public class GameHandler extends TextWebSocketHandler {
             session.close();
             return;
         }
-        if(rooms.containsKey(roomId) && rooms.get(roomId).size()>playerLimitForRoom){
+        if(roomId.length()>5 && rooms.containsKey(roomId) && rooms.get(roomId).size()>playerLimitForRoom){
             payLoad errorPl = new payLoad();
             errorPl.setType("Error");
             errorPl.setData("Room is full. (Room limit is 3).");
@@ -77,9 +83,6 @@ public class GameHandler extends TextWebSocketHandler {
         log.info("New connection to room: " + roomId);
         rooms.computeIfAbsent(roomId, k -> new HashMap<>()).put(session.getId(),session);
         log.info("sizing : "+rooms.entrySet().size());
-
-
-
 
 
 //        rooms.put(new HashMap<>(roomId,new HashMap<>()));
@@ -124,9 +127,7 @@ public class GameHandler extends TextWebSocketHandler {
 
         player.setRoomId(roomId);
         player.setSocketId(session.getId());
-
         player.setType(conType);
-
         if(!roomContainerMap.containsKey(roomId)){
             roomContainerMap.put(roomId, new ratContainer());
         }
@@ -157,6 +158,15 @@ public class GameHandler extends TextWebSocketHandler {
             }
         }
 
+        if(roomId.length()>5 && rooms.get(roomId).size()>=playerLimitForRoom){
+            Map<String,WebSocketSession> playersWithinRoom = rooms.get(roomId);
+            payLoad pl1 = new payLoad();
+            pl1.setType("startGame");
+            broadcastMessage(roomId,pl1.toString());
+            for(Map.Entry<String,WebSocketSession> it : playersWithinRoom.entrySet()){
+                idPlayerMap.get(it.getKey()).Setup();
+            }
+        }
     }
 
     @Override
@@ -300,6 +310,7 @@ public class GameHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         String roomId = getRoomId(session);
+//        String username =
         Map<String,WebSocketSession> sessions = rooms.get(roomId);;
         log.info("The player is leaving : "+session.getId());
 
@@ -307,14 +318,19 @@ public class GameHandler extends TextWebSocketHandler {
 
         rooms.put(roomId, sessions);
 
+        publicroomService.deallocateRoom(roomId);
+        idPlayerMap.get(session.getId()).setActive(false);
+
         if(sessions.isEmpty()){
             rooms.remove(roomId);
+            
             idPlayerMap.remove(session.getId());
             roomContainerMap.remove(roomId);
             log.info("The room is closed with id : "+roomId);
             return ;
         }
 
+        gameRepo.removePlayer(new ValidityDTO(env.conKey,this.getUsername(session),roomId));
 
 
         payLoad pl = new payLoad();
@@ -368,9 +384,10 @@ public class GameHandler extends TextWebSocketHandler {
                 } catch (Exception e) {
                     System.err.println("Error sending message to session ID: " + session.getId());
                     e.printStackTrace();
-
                 }
             }
+        }else{
+            logger.info("While broadcasting, roomId not found!");
         }
     }
 
@@ -395,7 +412,7 @@ public class GameHandler extends TextWebSocketHandler {
     }
 
 
-    @Scheduled(fixedRate = 5000)
+//    @Scheduled(fixedRate = 5000)
     public void spawnRat() {
 //        logger.info("sending the spawn rat message1" + rooms.entrySet().size());
 
@@ -501,6 +518,15 @@ public class GameHandler extends TextWebSocketHandler {
         return uri.split("/")[5];
 
     }
+    private String getUsername(WebSocketSession session) {
+        String uri = Objects.requireNonNull(session.getUri()).toString();
+        String[] tempList = uri.split("/");
+        for(String it: tempList){
+            logger.info(it);
+        }
+        return uri.split("/")[6];
+
+    }
 
     private List<player> getRankList(String roomId){
         List<player> playersWithinRoom = new ArrayList<>();
@@ -538,6 +564,7 @@ public class GameHandler extends TextWebSocketHandler {
         List<player> playersWithinRoom = getRankList(roomId);
         if (p.getRatCnt() >= maxAns) {
             result r = new result();
+
             for(player p1 : playersWithinRoom){
                 r.addRank(p1.getName());
             }
@@ -549,6 +576,16 @@ public class GameHandler extends TextWebSocketHandler {
 
 
                 playersWithinRoom.get(i).setActive(false);
+
+                Result result1 = new Result();
+//                result1.setId();
+                result1.setUsername(playersWithinRoom.get(i).getName());
+                result1.setCorrect(playersWithinRoom.get(i).getCorrect());
+                result1.setWrong(playersWithinRoom.get(i).getWrong());
+                result1.setTime(new Date());
+                result1.setConKey(env.conKey);
+                gameRepo.pushResult(result1);
+
 
                 String resultString = JsonUtil.toJson(r);
                 log.info("p1: "+resultString);

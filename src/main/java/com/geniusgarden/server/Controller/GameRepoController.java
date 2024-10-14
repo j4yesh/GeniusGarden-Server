@@ -7,6 +7,7 @@ import com.geniusgarden.server.Repository.ResultRepository;
 import com.geniusgarden.server.Repository.RoomRepository;
 import com.geniusgarden.server.Service.JsonUtil;
 import com.geniusgarden.server.Service.Util;
+import com.geniusgarden.server.Service.publicRoomService;
 import com.geniusgarden.server.env;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,9 +36,12 @@ public class GameRepoController {
     @Autowired
     RoomRepository roomRepository;
 
+    @Autowired
+    publicRoomService publicroomService;
+
 
     @PostMapping("/pushresult")
-    private ResponseEntity<String> pushResult(@RequestBody Result result) {
+    public ResponseEntity<String> pushResult(@RequestBody Result result) {
         try {
             if (authUserRepository.findByUsername(result.getUsername()).isPresent() && result.getConKey().equals(env.conKey)) {
                 Optional<AuthUser> user1 = authUserRepository.findByUsername(result.getUsername());
@@ -73,7 +77,7 @@ public class GameRepoController {
     }
 
 
-    @GetMapping("/getresult")
+    @GetMapping("/getresult")   //not used till now.
     private ResponseEntity<String> getResult(@RequestBody AuthUser user){
         try{
             List<Result> results = resultRepository.findByUsername(user.getUsername());
@@ -189,7 +193,7 @@ public class GameRepoController {
     }
 
     @PostMapping("/remove")
-    private ResponseEntity<String> removePlayer(@RequestBody ValidityDTO validity) {
+    public ResponseEntity<String> removePlayer(@RequestBody ValidityDTO validity) {
         try {
             String roomId = validity.getRoomId();
             String username = validity.getUsername();
@@ -240,6 +244,12 @@ public class GameRepoController {
         }
     }
 
-
-
+    @GetMapping("/getpublic")
+    ResponseEntity<String> getPublic(){
+        try{
+           return ResponseEntity.status(HttpStatus.OK).body(publicroomService.getRoom());
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
 }

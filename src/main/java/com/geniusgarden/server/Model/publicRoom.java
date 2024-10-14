@@ -1,26 +1,21 @@
 package com.geniusgarden.server.Model;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Date;
+import java.util.List;
 
-@Data
-@Document("result")
-@AllArgsConstructor
+@Document(collection = "publicRoom")
 @NoArgsConstructor
-public class Result {
+@AllArgsConstructor
+@Data
+public class publicRoom {
     @Id
     private String id;
-    private String username;
-    private int rank;
-    private int correct;
-    private int wrong;
-    private float acceptance;
-    private Date time;
-    private String conKey;
+    private int players;
+//    public List<String> used;
+//    public List<String>unused;
 }

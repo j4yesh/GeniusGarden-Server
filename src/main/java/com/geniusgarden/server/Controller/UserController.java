@@ -86,7 +86,7 @@ public class UserController {
 
             Otp otpEntity = new Otp(otp, user.getEmail(), now, expiryTime);
             otpRepository.save(otpEntity);
-//            otpDeletionService.scheduleOtpDeletion(otp,5*60*1000);
+            otpDeletionService.scheduleOtpDeletion(otp,5*60*1000);
             String htmlBody = getHtml.getOtpPage(otp);
 
             emailSender.sendmail(user.getEmail(), "Verification Otp : GeniusGarden", htmlBody);
