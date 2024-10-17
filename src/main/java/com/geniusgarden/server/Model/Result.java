@@ -17,10 +17,12 @@ public class Result {
     @Id
     private String id;
     private String username;
+    private String roomId;
     private int rank;
     private int correct;
     private int wrong;
     private float acceptance;
-    private Date time;
+    private String time;
     private String conKey;
+    private String duration;
 }

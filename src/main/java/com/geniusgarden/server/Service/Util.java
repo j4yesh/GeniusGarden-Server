@@ -2,8 +2,10 @@ package com.geniusgarden.server.Service;
 
 import com.geniusgarden.server.GameplayModel.vector3;
 
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Random;
-
+import java.time.LocalDateTime;
 public class Util {
     public static float calculateDistance(float x1, float y1, float x2, float y2) {
         float xDiff = x2 - x1;
@@ -24,5 +26,16 @@ public class Util {
         }
 
         return result.toString();
+    }
+
+    public static String findDuration(String startingTime, String formattedDateTime) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime startTime = LocalDateTime.parse(startingTime, formatter);
+        LocalDateTime endTime = LocalDateTime.parse(formattedDateTime, formatter);
+
+        long durationInMinutes = ChronoUnit.MINUTES.between(startTime, endTime);
+        long durationInSeconds = ChronoUnit.SECONDS.between(startTime, endTime) % 60;
+
+        return durationInMinutes + " minute(s) and " + durationInSeconds + " second(s)";
     }
 }

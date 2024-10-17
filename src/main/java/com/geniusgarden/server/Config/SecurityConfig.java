@@ -32,8 +32,8 @@ public class SecurityConfig {
         return http.csrf(customizer -> customizer.disable())
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("login", "register", "getotp" , "greet"
-                                , "pushresult" ,"getresult" ,"getplayers" , "leaderboard"
-                                ,"/game/**" ,"/server/**" ).permitAll()
+                                , "pushresult"  ,"getplayers" , "leaderboard"
+                                ,"/game/**" ,"/server/**" ,"getpublic" ).permitAll()
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session

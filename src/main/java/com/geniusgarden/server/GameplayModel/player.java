@@ -53,7 +53,7 @@ public class player {
     }
 
     public void Setup() {
-        GameHandler.logger.info(" settup begin..");
+//        GameHandler.logger.info(" settup begin..");
         executorService.submit(this::updateLoop);
     }
 
@@ -95,12 +95,12 @@ public class player {
                         this.ratCnt = Math.max(0, ratCnt - 1);
                         this.wrong++;
                         gamehandler.removeRat(this.SocketId, this.roomId, this.answer);
-                        GameHandler.logger.info(it.getKey() + " "+ this.answer + "wrong");
+//                        GameHandler.logger.info(it.getKey() + " "+ this.answer + "wrong");
                     } else {
                         this.ratCnt++;
                         this.correct++;
                         gamehandler.addRat(this.SocketId, this.roomId, this.answer);
-                        GameHandler.logger.info(it.getKey() + " "+ this.answer + "correct");
+//                        GameHandler.logger.info(it.getKey() + " "+ this.answer + "correct");
                     }
                     ratcontainer.disappearRat(it.getKey());
                 }

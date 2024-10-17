@@ -17,7 +17,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import javax.swing.text.html.Option;
+import java.net.http.HttpResponse;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -64,6 +69,18 @@ public class GameRepoController {
                 result.setAcceptance(Float.parseFloat(df.format(resultAcceptance)));
 
                 result.setConKey(":)");
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String formattedDateTime = LocalDateTime.now().format(formatter);
+                result.setTime(formattedDateTime);
+
+                Optional<Room> correspondingRoom = roomRepository.findById(result.getRoomId());
+                if(correspondingRoom.isPresent()){
+                    Room correspondingRoom1 = correspondingRoom.get();
+                    String startingTime = correspondingRoom1.getStartingTime();
+                    String duration = Util.findDuration(startingTime,formattedDateTime);
+                    result.setDuration(duration);
+                }
+
                 resultRepository.save(result);
                 authUserRepository.save(user);
 
@@ -78,13 +95,18 @@ public class GameRepoController {
 
 
     @GetMapping("/getresult")   //not used till now.
-    private ResponseEntity<String> getResult(@RequestBody AuthUser user){
+    private ResponseEntity<String> getResult(){
         try{
-            List<Result> results = resultRepository.findByUsername(user.getUsername());
-            if(!results.isEmpty()){
-                return ResponseEntity.status(HttpStatus.OK).body(JsonUtil.toJson(results));
-            }else {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No result found.");
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if(authentication.isAuthenticated()) {
+                List<Result> results = resultRepository.findByUsername(authentication.getName());
+                if (!results.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.OK).body(JsonUtil.toJson(results));
+                } else {
+                    return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No result found.");
+                }
+            }else{
+                return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).body("Not Authorized");
             }
         }catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
@@ -119,7 +141,7 @@ public class GameRepoController {
                         return Float.compare(o2.getAcceptance(), o1.getAcceptance());
                     }
                 });
-                int count = Math.min(20, players.size());
+                int count = Math.min(18, players.size());
                 players = players.subList(0, count);
                 return ResponseEntity.status(HttpStatus.OK).body(JsonUtil.toJson(players));
             } else {
@@ -136,7 +158,7 @@ public class GameRepoController {
         if (authentication != null) {
             String username =  authentication.getName();
             String roomId = Util.generateRandomString();
-            Room room = new Room(roomId,new ArrayList<>());
+            Room room = new Room(roomId,new ArrayList<>(),"");
             room.addPlayer(username);
             roomRepository.save(room);
             return ResponseEntity.status(HttpStatus.OK).body(roomId);
@@ -252,4 +274,24 @@ public class GameRepoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
+
+    @PostMapping("/startingmatch")
+    public ResponseEntity<String> startMatchTime(@RequestBody MatchDTO matchDTO){
+        try{
+            Optional<Room> room = roomRepository.findById(matchDTO.getRoomId());
+            if(room.isPresent()){
+                Room room1 = room.get();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String formattedDateTime = LocalDateTime.now().format(formatter);
+                room1.setStartingTime(formattedDateTime);
+                roomRepository.save(room1);
+                return ResponseEntity.status(HttpStatus.OK).body("Pushed Successfully");
+            }else{
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Room not found");
+            }
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
 }

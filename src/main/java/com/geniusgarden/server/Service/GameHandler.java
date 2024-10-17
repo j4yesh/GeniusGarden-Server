@@ -3,6 +3,7 @@ package com.geniusgarden.server.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geniusgarden.server.Controller.GameRepoController;
 import com.geniusgarden.server.GameplayModel.*;
+import com.geniusgarden.server.Model.MatchDTO;
 import com.geniusgarden.server.Model.Notification;
 import com.geniusgarden.server.Model.Result;
 import com.geniusgarden.server.Model.ValidityDTO;
@@ -32,7 +33,7 @@ public class GameHandler extends TextWebSocketHandler {
     private static final Map<String, ratContainer> roomContainerMap = new ConcurrentHashMap<>();
 
 
-    public static int playerLimitForRoom = 3;
+    public static int playerLimitForRoom = 1;
     public static int maxAns = 5;
     private static final float arenaSide = 20f;
 
@@ -51,7 +52,7 @@ public class GameHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         String conType = getRequestType(session); //join/host
         String roomId = getRoomId(session); //ex. 5f5f4
-
+        String username = getUsername(session);
         log.info(conType + ": connection type.");
 
         if ( roomId.length()>5 && !rooms.containsKey(roomId) && conType.equals("join")) {
@@ -158,11 +159,34 @@ public class GameHandler extends TextWebSocketHandler {
             }
         }
 
+//        setname
+            payLoad pl2 = new payLoad();
+            pl2.setType("setName");
+            pl2.setSocketId(session.getId());
+            pl2.setData(username);
+            broadcastMessage(roomId, JsonUtil.toJson(pl2));
+
+            player Player = idPlayerMap.get(session.getId());
+            Player.setName(username);
+
+            for (Map.Entry<String, player> it : idPlayerMap.entrySet()) {
+                if(!it.getKey().equals(session.getId())) {
+                    payLoad pl3 = new payLoad();
+                    pl3.setType("setName");
+                    pl3.setSocketId(it.getKey());
+                    pl3.setData(it.getValue().getName());
+                    sendMessageToClient(roomId, session.getId(), JsonUtil.toJson(pl3));
+                }
+            }
+
+
+//        sendMessageToClientWithoutRoom(session,pa1.toString());
         if(roomId.length()>5 && rooms.get(roomId).size()>=playerLimitForRoom){
             Map<String,WebSocketSession> playersWithinRoom = rooms.get(roomId);
-            payLoad pl1 = new payLoad();
-            pl1.setType("startGame");
-            broadcastMessage(roomId,pl1.toString());
+            payLoad pa1 = new payLoad();
+            pa1.setType("startGame");
+            broadcastMessage(roomId,JsonUtil.toJson(pa1));
+            gameRepo.startMatchTime(new MatchDTO(roomId,"",""));
             for(Map.Entry<String,WebSocketSession> it : playersWithinRoom.entrySet()){
                 idPlayerMap.get(it.getKey()).Setup();
             }
@@ -239,6 +263,8 @@ public class GameHandler extends TextWebSocketHandler {
             Map<String,WebSocketSession> refRoom = rooms.get(roomId);
             for(Map.Entry<String,WebSocketSession> it: refRoom.entrySet()){
 //                sendMessageToClient(roomId,it.getValue().getId(),JsonUtil.toJson(pl1));
+                gameRepo.startMatchTime(new MatchDTO(roomId,"",""));
+
                 if(idPlayerMap.containsKey(it.getKey())){
                     idPlayerMap.get(it.getKey()).Setup();
                 }
@@ -293,6 +319,8 @@ public class GameHandler extends TextWebSocketHandler {
                     pl2.setType("rematch");
                     broadcastMessage(roomId,JsonUtil.toJson(pl2));
                     List<player> playersWithinRoom = getRankList(roomId);
+                    gameRepo.startMatchTime(new MatchDTO(roomId,"",""));
+
                     for(player pla : playersWithinRoom){
                         pla.setRatCnt(0);
                         pla.setActive(true);
@@ -378,6 +406,7 @@ public class GameHandler extends TextWebSocketHandler {
         if(rooms.containsKey(roomId)) {
             Map<String, WebSocketSession> sessions = rooms.get(roomId);
             TextMessage textMessage = new TextMessage(message);
+//            GameHandler.logger.info("Room sizing while Broadcast : "+rooms.get(roomId).size());
             for (WebSocketSession session : sessions.values()) {
                 try {
                     session.sendMessage(textMessage);
@@ -412,7 +441,7 @@ public class GameHandler extends TextWebSocketHandler {
     }
 
 
-//    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = 5000)
     public void spawnRat() {
 //        logger.info("sending the spawn rat message1" + rooms.entrySet().size());
 
@@ -582,8 +611,8 @@ public class GameHandler extends TextWebSocketHandler {
                 result1.setUsername(playersWithinRoom.get(i).getName());
                 result1.setCorrect(playersWithinRoom.get(i).getCorrect());
                 result1.setWrong(playersWithinRoom.get(i).getWrong());
-                result1.setTime(new Date());
                 result1.setConKey(env.conKey);
+                result1.setRoomId(roomId);
                 gameRepo.pushResult(result1);
 
 

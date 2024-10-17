@@ -23,7 +23,7 @@ public class questionMaker {
         for(int i=0;i<n;i++){
             int operand1 = random.nextInt(10);
             int operand2 = random.nextInt(10);
-            int operator1 = random.nextInt(2);
+            int operator1 = random.nextInt(3);
             String que="",ans="";
             Integer res;
             switch (operator.get(operator1)){
@@ -35,7 +35,7 @@ public class questionMaker {
                     res=operand1-operand2;
                     ans = res.toString();
                     break;
-                case "*":
+                case "x":
                     res=operand1*operand2;
                     ans=res.toString();
                     break;

@@ -14,7 +14,7 @@ public class Room {
     @Id
     private String roomId;
     private List<String> players;
-
+    private String startingTime;
     public void addPlayer(String username){
         players.add(username);
     }

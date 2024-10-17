@@ -16,6 +16,7 @@ public class publicRoom {
     @Id
     private String id;
     private int players;
+    private boolean isUsed;
 //    public List<String> used;
 //    public List<String>unused;
 }
