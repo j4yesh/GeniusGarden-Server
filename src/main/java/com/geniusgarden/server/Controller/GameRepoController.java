@@ -5,6 +5,7 @@ import com.geniusgarden.server.Model.*;
 import com.geniusgarden.server.Repository.AuthUserRepository;
 import com.geniusgarden.server.Repository.ResultRepository;
 import com.geniusgarden.server.Repository.RoomRepository;
+import com.geniusgarden.server.Service.GameHandler;
 import com.geniusgarden.server.Service.JsonUtil;
 import com.geniusgarden.server.Service.Util;
 import com.geniusgarden.server.Service.publicRoomService;
@@ -47,6 +48,7 @@ public class GameRepoController {
 
     @PostMapping("/pushresult")
     public ResponseEntity<String> pushResult(@RequestBody Result result) {
+        GameHandler.logger.info(result.toString());
         try {
             if (authUserRepository.findByUsername(result.getUsername()).isPresent() && result.getConKey().equals(env.conKey)) {
                 Optional<AuthUser> user1 = authUserRepository.findByUsername(result.getUsername());
@@ -141,8 +143,8 @@ public class GameRepoController {
                         return Float.compare(o2.getAcceptance(), o1.getAcceptance());
                     }
                 });
-                int count = Math.min(18, players.size());
-                players = players.subList(0, count);
+//                int count = Math.min(18, players.size());
+//                players = players.subList(0, count);
                 return ResponseEntity.status(HttpStatus.OK).body(JsonUtil.toJson(players));
             } else {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No result found.");
@@ -257,7 +259,10 @@ public class GameRepoController {
         try{
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if(authentication!=null){
-                return ResponseEntity.status(HttpStatus.OK).body(authentication.getName());
+                AuthUser authUser = authUserRepository.findByUsername(authentication.getName()).get();
+                authUser.setPassword(":)");
+                return ResponseEntity.status(HttpStatus.OK).body(JsonUtil.toJson(authUser));
+
             }else{
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No response");
             }
@@ -269,6 +274,8 @@ public class GameRepoController {
     @GetMapping("/getpublic")
     ResponseEntity<String> getPublic(){
         try{
+            String roomId = publicroomService.getRoom();
+            roomRepository.save(new Room(roomId,null,null));
            return ResponseEntity.status(HttpStatus.OK).body(publicroomService.getRoom());
         }catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
