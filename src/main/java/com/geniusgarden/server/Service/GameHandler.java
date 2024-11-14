@@ -468,7 +468,7 @@ public class GameHandler extends TextWebSocketHandler {
                     p.setSocketId(session.getId());
                     p.setType("spawn rat");
 
-                    float halfArenaSide = arenaSide/2;
+                    float halfArenaSide = arenaSide;
                     Float randX = questionmaker.random.nextFloat(arenaSide) - halfArenaSide;
                     Float randY = questionmaker.random.nextFloat(arenaSide) - halfArenaSide;
 

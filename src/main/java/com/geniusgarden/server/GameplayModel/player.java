@@ -61,7 +61,7 @@ public class player {
         while (active) {
             Update();
             try {
-                Thread.sleep(20); // Consider using a constant for this magic number
+                Thread.sleep(20);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

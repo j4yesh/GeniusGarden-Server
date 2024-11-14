@@ -1,6 +1,7 @@
 package com.geniusgarden.server.Controller;
 
 
+import com.geniusgarden.server.GameplayModel.player;
 import com.geniusgarden.server.Model.*;
 import com.geniusgarden.server.Repository.AuthUserRepository;
 import com.geniusgarden.server.Repository.ResultRepository;
@@ -101,6 +102,9 @@ public class GameRepoController {
         try{
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if(authentication.isAuthenticated()) {
+                if(resultRepository.findByUsername(authentication.getName())==null){
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No games found!");
+                }
                 List<Result> results = resultRepository.findByUsername(authentication.getName());
                 if (!results.isEmpty()) {
                     return ResponseEntity.status(HttpStatus.OK).body(JsonUtil.toJson(results));
@@ -276,7 +280,7 @@ public class GameRepoController {
         try{
             String roomId = publicroomService.getRoom();
             roomRepository.save(new Room(roomId,null,null));
-           return ResponseEntity.status(HttpStatus.OK).body(publicroomService.getRoom());
+           return ResponseEntity.status(HttpStatus.OK).body(roomId);
         }catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
@@ -301,4 +305,8 @@ public class GameRepoController {
         }
     }
 
+    @GetMapping("/getspeed")
+    private ResponseEntity<String> getSpeed(){
+        return ResponseEntity.status(HttpStatus.OK).body(Float.toString(player.speed));
+    }
 }

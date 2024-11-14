@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
+import java.util.Optional;
 
 @RestController
 @AllArgsConstructor
@@ -56,8 +57,10 @@ public class UserController {
             if(userRepository.findByUsername(user.getUsername()).isPresent()){
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already exists.");
             } else {
-                if(otpRepository.findByOtp(user.getOtp()).isPresent()) {
-                    System.out.println("instance");
+                Optional<Otp> existingOtp = otpRepository.findByOtp(user.getOtp());
+
+                if(otpRepository.findByOtp(user.getOtp()).isPresent()
+                   && existingOtp.get().getUserEmail().equals(user.getEmail())) {
                     user.setPassword(passwordEncoder().encode(user.getPassword()));
                     user.setActive(true);
                     userRepository.save(user);
@@ -109,5 +112,22 @@ public class UserController {
         }
     }
 
+    @PostMapping("/forgetpassword")
+    public ResponseEntity<String> forgetPassword(@RequestBody AuthUser user){
+        try {
+            System.out.println(user);
+            Optional<Otp> existingOtp = otpRepository.findByOtp(user.getOtp());
+                if(existingOtp.isPresent()
+                        && user.getEmail().equals(existingOtp.get().getUserEmail())) {
+                    user.setPassword(passwordEncoder().encode(user.getPassword()));
+                    userRepository.save(user);
+                    return ResponseEntity.status(HttpStatus.CREATED).body("Password Change Successfully");
+                }else{
+                    return ResponseEntity.status(HttpStatus.FAILED_DEPENDENCY).body("Enter valid otp.");
+                }
 
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
 }

@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("login", "register", "getotp" , "greet"
                                 , "pushresult"  ,"getplayers" , "leaderboard"
-                                ,"/game/**" ,"/server/**" ,"getpublic" ).permitAll()
+                                ,"/game/**" ,"/server/**" ,"getpublic" ,"getspeed" ).permitAll()
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session
