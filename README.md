@@ -52,6 +52,10 @@ Players are placed in an arena where they must collect nodes by answering questi
 ![Gameplay Screenshot 2](https://i.ibb.co/9y7qR09/Screenshot-2024-09-30-235723.png)
 *Gameplay Screenshot 2*
 
+![Screenshot 1](https://i.ibb.co/k5xdLTb/Whats-App-Image-2024-10-22-at-11-54-41.jpg)
+![Screenshot 2](https://i.ibb.co/GpJL7yk/Whats-App-Image-2024-10-22-at-09-27-44.jpg)
+![Screenshot 3](https://i.ibb.co/bvpdcHB/Whats-App-Image-2024-10-22-at-08-58-24.jpg)
+![Screenshot 4](https://i.ibb.co/ZSx4Xrm/Whats-App-Image-2024-10-22-at-08-55-16.jpg)
 
 ### Prototype Demo
 A demonstration of the core gameplay was initially built using **Cocos Creator** with **TypeScript**. You can view the prototype here: [Prototype Demo](https://65ffff55fb849bc3e6c1255f--lucky-halva-6ea51c.netlify.app/).
@@ -89,6 +93,7 @@ Watch the gameplay demonstration on YouTube: [YouTube Video](https://www.youtube
 1. Start the server as described above.
 2. Run the Unity client and connect using the server's WebSocket URL. [Unity Client](https://github.com/j4yesh/GeniusGarden)
 3. Play the game, and the server will handle real-time interactions and multithreaded game logic.
+
 
 ## Contributing
 Contributions are welcome! Feel free to open an issue or submit a pull request.
